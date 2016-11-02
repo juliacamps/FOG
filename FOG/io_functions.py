@@ -20,7 +20,6 @@ from operator import itemgetter
 
 from keras.models import model_from_json
 
-# _WORKING_DIR = getcwd()
 _WORKING_DIR = getcwd()
 _DEFAULT_DATA_PATH = _WORKING_DIR + '/../../data/'
 _DEFAULT_RAW_DATA_PATH = _WORKING_DIR + '/../../RAW_DATA/'

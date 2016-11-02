@@ -5,14 +5,18 @@
 
 import numpy as np
 
-from src.libraries.io_functions import silent_remove
-from src.libraries.io_functions import get_data_path
-from src.libraries.io_functions import get_raw_data_path
-from src.libraries.io_functions import save_matrix_data
-from src.libraries.io_functions import read_data
-from src.libraries.io_functions import prepare_path
-from src.libraries.preprocessing_tools import full_preprocessing
-from src.libraries.preprocessing_tools import generate_dataset
+from FOG.io_functions import silent_remove
+from FOG.io_functions import get_data_path
+from FOG.io_functions import get_raw_data_path
+from FOG.io_functions import save_matrix_data
+from FOG.io_functions import read_data
+from FOG.io_functions import prepare_path
+from FOG.preprocessing_tools import full_preprocessing
+from FOG.preprocessing_tools import generate_dataset
+
+import os
+
+print(os.getcwd())
 
 # Environment params and settings
 raw_file = get_raw_data_path(group=True)
@@ -20,7 +24,7 @@ old_file = get_data_path()
 
 for [old_file_path, old_name] in old_file:
     silent_remove(old_file_path)
-    
+
 new_file_name_W = 'walk_'
 new_file_name_F = 'fog_'
 
@@ -46,20 +50,31 @@ for patient_name, patient_data in raw_file.items():
         # Read raw data
         mat_contents = read_data(file_path)[0]
         # Reformat data
-        giro_data = np.array((mat_contents["sWaist"][0][0])[1][:])
-        acc_data = np.array((mat_contents["sWaist"][0][0])[2][:])
-        magn_data = np.array((mat_contents["sWaist"][0][0])[3][:])
+        giro_data = np.array((mat_contents["sWaist"][0][0])[1][:][
+                             ::5])
+        acc_data = np.array((mat_contents["sWaist"][0][0])[2][:][::5])
+        magn_data = np.array((mat_contents["sWaist"][0][0])[3][:][
+                             ::5])
         class_data_F = np.array((((mat_contents["sWaist"][0][0])[11])
-                                 [0][0][10])[:])
+                                 [0][0][10])[:][::5])
         class_data_W = np.array((((mat_contents["sWaist"][0][0])[11])
-                                 [0][0][9])[:])
+                                 [0][0][9])[:][::5])
         
         # CLEAN NAN
         sub_part_indexes_raw = np.unique(np.concatenate((np.where(
             np.isnan(giro_data))[0], np.where(np.isnan(acc_data))[0],
-            np.where(np.isnan(magn_data))[0],
-            np.where(np.isnan(class_data_W))[0],
-            np.where(np.isnan(class_data_F))[0])))
+                                                         np.where(
+                                                             np.isnan(
+                                                                 magn_data))[
+                                                             0],
+                                                         np.where(
+                                                             np.isnan(
+                                                                 class_data_W))[
+                                                             0],
+                                                         np.where(
+                                                             np.isnan(
+                                                                 class_data_F))[
+                                                             0])))
         
         sub_part_indexes = []
         if len(sub_part_indexes_raw) > 0:
@@ -76,7 +91,7 @@ for patient_name, patient_data in raw_file.items():
                     sub_part_indexes.append(next_index + 1)
             else:
                 sub_part_indexes.append(pre_index + 1)
-
+        
         giro_data_part = np.split(giro_data, sub_part_indexes)
         acc_data_part = np.split(acc_data, sub_part_indexes)
         magn_data_part = np.split(magn_data, sub_part_indexes)
@@ -98,7 +113,7 @@ for patient_name, patient_data in raw_file.items():
             info_F[i, 0] += n_sample
             info_F[i, 1] += np.sum((sub_F > 1))
             info_F[i, 2] += n_unlabeled
-
+            
             # CLEANING CRITERIA
             criteria_W = [0, 29, 30, 31]
             indexes_W = np.where(sub_W == criteria_W)[0]
@@ -107,7 +122,6 @@ for patient_name, patient_data in raw_file.items():
             criteria_F = [0]
             indexes_F = np.where(sub_W == criteria_F)[0]
             
-
             sub_W = (sub_W == 6)
             sub_W[indexes_W] = -1
             data_W = np.concatenate((sub_giro, sub_acc, sub_magn,
@@ -134,7 +148,7 @@ for patient_name, patient_data in raw_file.items():
                 mean_cum += (mean_diff / it_std_n)
                 std_cum += (mean_diff * (curr_sample - mean_cum))
     i += 1
-std_cum = np.sqrt(std_cum/(it_std_n - 1))
+std_cum = np.sqrt(std_cum / (it_std_n - 1))
 
 std_mean_result = [['Data_column', 'giro_1', 'giro_2', 'giro_3',
                     'acc_1', 'acc_2', 'acc_3', 'magn_1', 'magn_2',

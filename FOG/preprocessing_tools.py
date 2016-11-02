@@ -5,9 +5,9 @@
 from xml.sax import default_parser_list
 
 import numpy as np
-from random import shuffle
-import csv
 import pandas as pd
+
+from random import shuffle
 
 from FOG.io_functions import get_dataset
 from FOG.io_functions import save_matrix_data
@@ -21,10 +21,9 @@ _DATA_STD = [27.8457523169, 34.0549218804, 20.2572144113,
 _DATA_MEAN = [-22.3248296633, -14.23055157, 9.182059959,
               -1.9622041635, -7.9877904591, -0.7412694559,
               0.2767348722, 0.7317887307, 0.196745521]
-_TEST_PATIENT_CANDIDATES = ['fsl18', 'mac17', 'tek04', 'nui13',
-                            'fsl11', 'nui16', 'mac03']
-_TEST_PATIENT_DEFAULT = ['fsl18', 'mac17', 'tek04', 'nui13', 'fsl11']
-_VAL_PATIENT_DEFAULT = ['fsl17', 'tek24', 'nui16']
+
+_VAL_PATIENT_DEFAULT = ['mac20', 'tek12', 'fsl13']
+_TEST_PATIENT_DEFAULT = ['fsl18', 'mac17', 'tek24', 'nui13', 'tek23']
 _DATA_AUGMENTATION = ['shift', 'noise']
 _SHIFT_RANGE = [-0.25, 0.25]
 _REPRODUCIBILITY = True
@@ -60,14 +59,11 @@ def generate_arrays_from_file(model_, path_list, window_size,
             for i in range(augment_count):
                 noise.append(np.random.normal(0, 1, (window_size,
                                                      _N_FEATURES)))
-    sample_count = 0
     state = False
     while 1:
         batch_count = 0
         y_cum = 0
         aux_count = 0
-        batch_data = []
-        batch_label = []
         for path in path_list:
             for it_augment in range(augment_count + 1):
                 gaussian_noise = noise[it_augment]
@@ -95,8 +91,11 @@ def generate_arrays_from_file(model_, path_list, window_size,
                             batch_Y.append(y)
                             batch_it += 1
                             if batch_it == batch_size:
-                                # yield (np.asarray(batch_X),
-                                #        np.asarray(batch_Y))
+                                # yield (np.asarray(batch_X).reshape(
+                                #     (batch_size, window_size,
+                                #      _N_FEATURES, 1)),
+                                #        np.asarray(batch_Y).reshape(
+                                #            (batch_size, 1)))
                                 y_cum += sum(np.asarray(batch_Y))
                                 batch_count += 1
                                 batch_X = []
@@ -104,6 +103,13 @@ def generate_arrays_from_file(model_, path_list, window_size,
                                 batch_it = 0
                         X_old = X_raw
                     else:
+                        # if batch_it > 0:
+                            # yield (np.asarray(batch_X).reshape(
+                            #     (batch_size, window_size,
+                            #      _N_FEATURES, 1)),
+                            #        np.asarray(batch_Y).reshape(
+                            #            (batch_size, 1)))
+                            # batch_count += batch_it / batch_size
                         X_old = None
                         batch_it = 0
                         batch_X = []
@@ -415,13 +421,17 @@ class AuxModel():
         """"""
 
 if __name__ == '__main__':
-    train_data = ['tek07', 'nui14', 'nui01', 'fsl13', 'tek12',
-                 'fsl20', 'mac03',
-     'fsl14', 'fsl15', 'mac21', 'mac19', 'tek25',
-     'mac12', 'mac04', 'fsl24', 'nui06', 'tek23', 'mac07', 'mac20',
-     'fsl16', 'mac10']
-    val_data = ['fsl17', 'tek24', 'nui16']
-    test_data = ['fsl18', 'mac17', 'tek04', 'nui13', 'fsl11']
+    patient_list = ['nui16', 'tek07', 'mac03', 'tek04', 'tek24',
+                    'mac17', 'mac21', 'tek25', 'mac04', 'mac07',
+                    'tek12','fsl11', 'mac12', 'mac19', 'tek23',
+                    'fsl18', 'fsl14', 'nui13', 'fsl24', 'fsl20',
+                    'fsl16', 'fsl15', 'fsl17', 'mac10', 'fsl13',
+                    'nui14', 'nui06', 'mac20', 'nui01']
+    train_data = [patient for patient in patient_list
+                  if (patient not in _VAL_PATIENT_DEFAULT
+                      and patient not in _TEST_PATIENT_DEFAULT)]
+    val_data = _VAL_PATIENT_DEFAULT
+    test_data = _TEST_PATIENT_DEFAULT
     model = AuxModel()
     train_file = [file for patient in train_data for file in
                   get_patient_data_files(patient,
@@ -433,7 +443,7 @@ if __name__ == '__main__':
                 get_patient_data_files(patient,
                                        type_name='fog')]
     # print(train_file)
-    batch_size = 32
+    batch_size = 50
     data_freq = 200
     time_window = 1
     window_overlaping = 0.5
@@ -441,7 +451,7 @@ if __name__ == '__main__':
     window_spacing = int(round(window_size * (1 - window_overlaping)))
 
     # print('Start')
-    train_generator = generate_arrays_from_file(model, train_file,
+    generate_arrays_from_file(model, train_file,
                                         window_size,
                                                 window_spacing,
                                                 batch_size=batch_size,

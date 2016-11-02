@@ -20,5 +20,6 @@ import os
 #
 # result_ = loaded_model.evaluate_generator(validation_generator,
 #                                           val_samples=_N_VAL_SAMPLE)
-from os import getcwd
-print(getcwd())
+# from os import
+import sys
+print(sys.version_info)

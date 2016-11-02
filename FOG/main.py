@@ -13,12 +13,14 @@ from keras.layers import Flatten
 from keras.callbacks import Callback
 from keras.layers.convolutional import Convolution2D
 from keras.layers.convolutional import Convolution1D
+from keras.layers.convolutional import MaxPooling2D
 from keras.layers.convolutional import MaxPooling1D
 
 from FOG.preprocessing_tools import generate_arrays_from_file
 from FOG.io_functions import get_patient_data_files
 from FOG.io_functions import save_model
 from FOG.io_functions import load_model
+from FOG.preprocessing_tools import split_data
 
 
 _SEQ_CHANNEL = 1
@@ -38,7 +40,7 @@ _TRAIN_MODEL = True
 _TEST_MODEL = False
 _N_TRAIN_BATCH = 4795
 _BATCH_SIZE = 50
-_N_TRAIN_SAMPLE = 239750
+_N_TRAIN_SAMPLE = 115988
 _N_VAL_SAMPLE = 45100
 _N_TEST_SAMPLE = 61250
 _EARLY_STOPPING_TH = 0.05
@@ -54,16 +56,16 @@ class PrintBatch(Callback):
 def build_model():
     """Build the model"""
     model_ = Sequential()
-
+    
     model_.add(Convolution2D(64, 9, 9, border_mode='same',
                              input_shape=(_SEQ_TIME_STEP,
                                          _SEQ_FEATURE, _SEQ_CHANNEL),
                             activation='relu'))
     # model.add(MaxPooling2D(pool_size=(2, 2)))
     model_.add(Dropout(0.25))
-
-    model_.add(Convolution1D(64, 5, activation='relu'))
-    model_.add(MaxPooling1D(pool_size=2))
+    # print(1)
+    model_.add(Convolution2D(64, 5, 1, activation='relu'))
+    # model_.add(MaxPooling2D(pool_size=(2,1 )))
     model_.add(Dropout(0.25))
 
     # model_.add(Convolution2D(64, 5, activation='relu'))
@@ -82,8 +84,7 @@ def build_model():
     # model_.add(Dropout(0.5))
 
     model_.add(Dense(1, activation='sigmoid'))
-    # model_.add(Dense(_N_CLASS, activation='softmax'))
-    
+
     return model_
 
 
@@ -194,7 +195,13 @@ def cross_validate(model_, n_fold=_N_FOLD, n_epoch=_N_EPOCH):
         result_cum += result['acc'] / n_fold
     result['val_acc'] = result_cum
     return [best_model, result]
-    
+
+
+def aux_generator():
+    """"""
+    while 1:
+        yield (np.zeros((50,100,9,1)), np.zeros((50,1)))
+
 
 def single_train(model_, train_file, validation_file,
                  n_epoch=_N_EPOCH, time_window=_T_WINDOW,
@@ -213,33 +220,55 @@ def single_train(model_, train_file, validation_file,
                                                 window_spacing,
                                                 batch_size=_BATCH_SIZE,
                                                 augment_count=0)
-    for aux1, aux in train_generator:
-        print(aux)
-        print(len(aux))
-        print(np.array(aux).shape)
-        exit(1)
+
     validation_generator = generate_arrays_from_file(
                 model_, validation_file, window_size, window_spacing,
                 batch_size=_BATCH_SIZE, augment_count=0)
     prev_acc = 0
     result_ = None
-    for i in range(n_epoch):
-        for [X_batch, Y_batch] in train_generator:
-            model_.train_on_batch(X_batch, Y_batch)
+    # aux_gen = aux_generator()
+
+    # for aux_data in aux_gen:
+    #     print(len(aux_data))
+    #     print(aux_data[0].shape)
+    #     print(aux_data[1].shape)
+    #     print(type(aux_data))
+    #     print(aux_data[0].shape[0])
+    #     break
+    # for aux_data in train_generator:
+    #     print(len(aux_data))
+    #     print(aux_data[0].shape)
+    #     print(aux_data[1].shape)
+    #     print(type(aux_data))
+    #     print(aux_data[0].shape[0])
+    #     break
+    # exit(1)
+    print('Entra')
+    model_.fit_generator(train_generator,
+                         samples_per_epoch=114100,
+                         nb_epoch=1,
+                  verbose=1, callbacks=[], validation_data=validation_generator,
+                  nb_val_samples=22400, class_weight=None,
+                  max_q_size=10, nb_worker=1, pickle_safe=False)
+    print('Passed')
+    exit(1)
+    # for i in range(n_epoch):
+    #     for [X_batch, Y_batch] in train_generator:
+    #         model_.train_on_batch(X_batch, Y_batch)
             
-        model_.fit_generator(train_generator,
-                             samples_per_epoch=_N_TRAIN_SAMPLE,
-                             nb_epoch=1, max_q_size=5)
-        
-        print('Train finished')
-        result_ = model.evaluate_generator(validation_generator,
-                                          val_samples=_N_VAL_SAMPLE)
-        print('Validation finished: ')
-        print(result_)
-        acc = result_[1]
-        if (acc - prev_acc) < stopping_th or (1 - acc) < stopping_th:
-            print('Training Finished due to EARLY STOPPING')
-            break
+        # model_.fit_generator(train_generator,
+        #                      samples_per_epoch=_N_TRAIN_SAMPLE,
+        #                      nb_epoch=1, max_q_size=5)
+        #
+        # print('Train finished')
+        # result_ = model.evaluate_generator(validation_generator,
+        #                                   val_samples=_N_VAL_SAMPLE)
+        # print('Validation finished: ')
+        # print(result_)
+        # acc = result_[1]
+        # if (acc - prev_acc) < stopping_th or (1 - acc) < stopping_th:
+        #     print('Training Finished due to EARLY STOPPING')
+        #     break
     
     return [model_, result_]
 
@@ -293,8 +322,12 @@ if __name__ == '__main__':
         model = load_trained_model('model_fog')
     else:
         model = build_model()
-        model.compile(loss='binary_crossentropy', optimizer='adam',
-                  metrics=['accuracy'])
+        # model.compile(loss='binary_crossentropy', optimizer='adam',
+        #           metrics=['accuracy'])
+
+        model.compile(loss='binary_crossentropy',
+                      optimizer='rmsprop',
+                      metrics=['accuracy'])
         
     # Train
     if _TRAIN_MODEL:
