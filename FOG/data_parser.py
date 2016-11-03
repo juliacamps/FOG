@@ -14,12 +14,9 @@ from FOG.io_functions import prepare_path
 from FOG.preprocessing_tools import full_preprocessing
 from FOG.preprocessing_tools import generate_dataset
 
-import os
-
-print(os.getcwd())
 
 # Environment params and settings
-raw_file = get_raw_data_path(group=True)
+raw_file = get_raw_data_path()
 old_file = get_data_path()
 
 for [old_file_path, old_name] in old_file:
@@ -63,18 +60,9 @@ for patient_name, patient_data in raw_file.items():
         # CLEAN NAN
         sub_part_indexes_raw = np.unique(np.concatenate((np.where(
             np.isnan(giro_data))[0], np.where(np.isnan(acc_data))[0],
-                                                         np.where(
-                                                             np.isnan(
-                                                                 magn_data))[
-                                                             0],
-                                                         np.where(
-                                                             np.isnan(
-                                                                 class_data_W))[
-                                                             0],
-                                                         np.where(
-                                                             np.isnan(
-                                                                 class_data_F))[
-                                                             0])))
+            np.where(np.isnan(magn_data))[0],
+            np.where(np.isnan(class_data_W))[0],
+            np.where(np.isnan(class_data_F))[0])))
         
         sub_part_indexes = []
         if len(sub_part_indexes_raw) > 0:
@@ -164,6 +152,10 @@ std_mean_result = [['Data_column', 'giro_1', 'giro_2', 'giro_3',
                     str(mean_cum[8])]]
 
 # SAVE META-DATA
+print('STD')
+print(std_cum)
+print('MEAN')
+print(mean_cum)
 info_W_result = [std_mean_result[0], std_mean_result[1],
                  std_mean_result[2], ['Patient', 'Instances',
                                       'Positive_count',
@@ -187,8 +179,8 @@ for i in range(len(patient_names)):
                           % (info_F[i, 1] / info_F[i, 0]), '%.6f'
                           % (info_F[i, 2] / info_F[i, 0])])
 
-# save_matrix_data(info_W_result, file_name=(new_file_name_W +
-#                                            'info'), print_=True)
+save_matrix_data(info_W_result, file_name=(new_file_name_W +
+                                           'info'), print_=True)
 save_matrix_data(info_F_result, file_name=(new_file_name_F +
                                            'info'), print_=True)
 

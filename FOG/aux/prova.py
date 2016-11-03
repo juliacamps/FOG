@@ -21,5 +21,26 @@ import os
 # result_ = loaded_model.evaluate_generator(validation_generator,
 #                                           val_samples=_N_VAL_SAMPLE)
 # from os import
-import sys
-print(sys.version_info)
+import numpy as np
+
+
+dim = 3
+    
+H = np.eye(dim)
+D = np.ones((dim,))
+for n in range(1, dim):
+    x = np.random.normal(size=(dim-n+1,))
+    D[n-1] = np.sign(x[0])
+    x[0] -= D[n-1]*np.sqrt((x*x).sum())
+    # Householder transformation
+
+    Hx = np.eye(dim-n+1) - 2.*np.outer(x, x)/(x*x).sum()
+    mat = np.eye(dim)
+    mat[n-1:,n-1:] = Hx
+    H = np.dot(H, mat)
+# Fix the last sign such that the determinant is 1
+D[-1] = -D.prod()
+H = (D*H.T).T
+ 
+print(H)
+print(np.array(H).shape)

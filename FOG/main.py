@@ -5,6 +5,7 @@
 
 import numpy as np
 import random as rd
+import time
 
 from keras.models import Sequential
 from keras.layers import Dense
@@ -21,29 +22,35 @@ from FOG.io_functions import get_patient_data_files
 from FOG.io_functions import save_model
 from FOG.io_functions import load_model
 from FOG.preprocessing_tools import split_data
+from FOG.models import build_model
 
 
 _SEQ_CHANNEL = 1
-_SEQ_TIME_STEP = 100    # _SEQ_FREQ * _T_WINDOW
 _SEQ_FEATURE = 9
 _N_CLASS = 2
-_N_EPOCH = 10
+_N_EPOCH = 50
 _N_FOLD = 1
-_T_WINDOW = 0.5
+_T_WINDOW = 3.2
 _WINDOW_OVERLAP = 0.5
-_SEQ_FREQ = 200
-_DETECTION_PROBLEM = 'fog'
+_SEQ_FREQ = 40
+_DETECTION_PROBLEM = 'walk'
 _PREPROCESS_FINISHED = True
 _PRECALCULATE = False
 _LOAD_MODEL = False
 _TRAIN_MODEL = True
 _TEST_MODEL = False
-_N_TRAIN_BATCH = 4795
-_BATCH_SIZE = 50
-_N_TRAIN_SAMPLE = 115988
-_N_VAL_SAMPLE = 45100
-_N_TEST_SAMPLE = 61250
-_EARLY_STOPPING_TH = 0.05
+_BATCH_SIZE = 64
+if _DETECTION_PROBLEM == 'fog':
+    _N_TRAIN_SAMPLE = 674880
+    _N_VAL_SAMPLE = 6560
+    _N_TEST_SAMPLE = 12192
+elif _DETECTION_PROBLEM == 'walk':
+    _N_TRAIN_SAMPLE = 67488
+    _N_VAL_SAMPLE = 6560
+    _N_TEST_SAMPLE = 12192
+
+_EARLY_STOPPING_TH = 0.01
+_MAX_Q_SIZE = 5
 
 
 class PrintBatch(Callback):
@@ -53,39 +60,39 @@ class PrintBatch(Callback):
         print(logs)
 
 
-def build_model():
-    """Build the model"""
-    model_ = Sequential()
-    
-    model_.add(Convolution2D(64, 9, 9, border_mode='same',
-                             input_shape=(_SEQ_TIME_STEP,
-                                         _SEQ_FEATURE, _SEQ_CHANNEL),
-                            activation='relu'))
-    # model.add(MaxPooling2D(pool_size=(2, 2)))
-    model_.add(Dropout(0.25))
-    # print(1)
-    model_.add(Convolution2D(64, 5, 1, activation='relu'))
-    # model_.add(MaxPooling2D(pool_size=(2,1 )))
-    model_.add(Dropout(0.25))
-
-    # model_.add(Convolution2D(64, 5, activation='relu'))
-    # # model.add(MaxPooling2D(pool_size=(2, 2)))
-    # model_.add(Dropout(0.25))
-    #
-    # model_.add(Convolution2D(64, 3, activation='relu'))
-    # # # model.add(MaxPooling2D(pool_size=(2, 2)))
-    # model_.add(Dropout(0.25))
-
-    model_.add(Flatten())
-    model_.add(Dense(128, activation='relu'))
-    model_.add(Dropout(0.25))
-
-    # model_.add(Dense(128, activation='relu'))
-    # model_.add(Dropout(0.5))
-
-    model_.add(Dense(1, activation='sigmoid'))
-
-    return model_
+# def build_model():
+#     """Build the model"""
+#     model_ = Sequential()
+#     window_size = _SEQ_FREQ * _T_WINDOW
+#     model_.add(Convolution2D(64, 9, 9, border_mode='same',
+#                              input_shape=(window_size,
+#                                           _SEQ_FEATURE, _SEQ_CHANNEL),
+#                              activation='relu'))
+#     # model_.add(MaxPooling2D(pool_size=(2, 1)))
+#     model_.add(Dropout(0.5))
+#
+#     model_.add(Convolution2D(64, 5, 1, activation='relu'))
+#     # model_.add(MaxPooling2D(pool_size=(2, 1)))
+#     model_.add(Dropout(0.5))
+#
+#     model_.add(Convolution2D(64, 3, 1, activation='relu'))
+#     # model_.add(MaxPooling2D(pool_size=(2, 1)))
+#     model_.add(Dropout(0.5))
+#
+#     # model_.add(Convolution2D(64, 3, 1, activation='relu'))
+#     # # model_.add(MaxPooling2D(pool_size=(2, 1)))
+#     # model_.add(Dropout(0.5))
+#
+#     model_.add(Flatten())
+#     model_.add(Dense(128, activation='relu'))
+#     model_.add(Dropout(0.5))
+#
+#     # model_.add(Dense(128, activation='relu'))
+#     # model_.add(Dropout(0.5))
+#
+#     model_.add(Dense(1, activation='sigmoid'))
+#
+#     return model_
 
 
 def load_trained_model(name='model'):
@@ -215,62 +222,56 @@ def single_train(model_, train_file, validation_file,
     window_size = int(time_window * data_freq)
     window_spacing = int(round(window_size * (1 - window_overlaping)))
     
-    train_generator = generate_arrays_from_file(model_, train_file,
-                                                window_size,
-                                                window_spacing,
-                                                batch_size=_BATCH_SIZE,
-                                                augment_count=0)
+    train_generator = generate_arrays_from_file(
+        model_, train_file, window_size, window_spacing,
+        batch_size=_BATCH_SIZE, augment_count=[2, 9],
+        augement_data_type='all')
 
     validation_generator = generate_arrays_from_file(
                 model_, validation_file, window_size, window_spacing,
-                batch_size=_BATCH_SIZE, augment_count=0)
+                batch_size=_BATCH_SIZE)
     prev_acc = 0
     result_ = None
-    # aux_gen = aux_generator()
+    acc = 0
+    time_count = time.clock()
+    epochs = 0
+    status = 'OK'
 
-    # for aux_data in aux_gen:
-    #     print(len(aux_data))
-    #     print(aux_data[0].shape)
-    #     print(aux_data[1].shape)
-    #     print(type(aux_data))
-    #     print(aux_data[0].shape[0])
-    #     break
-    # for aux_data in train_generator:
-    #     print(len(aux_data))
-    #     print(aux_data[0].shape)
-    #     print(aux_data[1].shape)
-    #     print(type(aux_data))
-    #     print(aux_data[0].shape[0])
-    #     break
-    # exit(1)
     print('Entra')
-    model_.fit_generator(train_generator,
-                         samples_per_epoch=114100,
-                         nb_epoch=1,
-                  verbose=1, callbacks=[], validation_data=validation_generator,
-                  nb_val_samples=22400, class_weight=None,
-                  max_q_size=10, nb_worker=1, pickle_safe=False)
-    print('Passed')
-    exit(1)
-    # for i in range(n_epoch):
-    #     for [X_batch, Y_batch] in train_generator:
-    #         model_.train_on_batch(X_batch, Y_batch)
-            
-        # model_.fit_generator(train_generator,
-        #                      samples_per_epoch=_N_TRAIN_SAMPLE,
-        #                      nb_epoch=1, max_q_size=5)
-        #
-        # print('Train finished')
-        # result_ = model.evaluate_generator(validation_generator,
-        #                                   val_samples=_N_VAL_SAMPLE)
-        # print('Validation finished: ')
-        # print(result_)
-        # acc = result_[1]
-        # if (acc - prev_acc) < stopping_th or (1 - acc) < stopping_th:
-        #     print('Training Finished due to EARLY STOPPING')
-        #     break
-    
-    return [model_, result_]
+    for i in range(n_epoch):
+        result_ = [0, 0]
+        try:
+            model_.fit_generator(train_generator,
+                                 samples_per_epoch=_N_TRAIN_SAMPLE,
+                                 nb_epoch=1, verbose=1, callbacks=[],
+                                 validation_data=None,
+                                 nb_val_samples=None,
+                                 class_weight=None,
+                                 max_q_size=_MAX_Q_SIZE, nb_worker=1,
+                                 pickle_safe=False)
+        except Exception as e:
+            status = 'ERROR:' + str(repr(e))
+            break
+        else:
+            try:
+                result_ = model_.evaluate_generator(
+                    validation_generator, val_samples=_N_VAL_SAMPLE)
+            except Exception as e:
+                status = 'ERROR:' + str(repr(e))
+                break
+            else:
+                epochs += 1
+                print(result_)
+                acc = result_[1]
+                if (acc - prev_acc) < stopping_th or (1 - acc) < stopping_th:
+                    print('Training Finished due to EARLY STOPPING')
+                    break
+                prev_acc = acc
+
+    print('Train finished')
+    print('Validation acc: ' + str(acc))
+    return [model_, [result_, epochs, (time_count - time.clock()),
+                     status]]
 
 
 def test_model(model_, test_patient, time_window=_T_WINDOW,
@@ -305,7 +306,6 @@ if __name__ == '__main__':
     from FOG.preprocessing_tools import generate_dataset
     from FOG.preprocessing_tools import gen_k_folds
     
-    print('Start')
     # Get data
     [test_patient, train_patient] = generate_dataset()
     # Pre-calculate
@@ -316,34 +316,62 @@ if __name__ == '__main__':
     # Initialize
     # seed = 170
     # seed = np.random.seed(seed)
-
+    
     # Build model
     if _LOAD_MODEL:
         model = load_trained_model('model_fog')
     else:
-        model = build_model()
-        # model.compile(loss='binary_crossentropy', optimizer='adam',
-        #           metrics=['accuracy'])
+        for j in range(10):
+            window_size = _SEQ_FREQ * _T_WINDOW
+            model = build_model(window_size)
+            n_conv = [3, 3, 3, 4, 4, 4, 5, 5, 5]
+            n_dense = [2, 2, 2, 2, 3, 3, 3, 3, 3]
+            k_shapes = [[32, 15, 9], [32, 7, 1], [64, 5, 1], [64, 3, 1],
+                        [128, 3, 1]]
+            dense_shape = [128, 128, 256]
+            pooling = [False, True, False, True, False, True, True,
+                       True, True]
+            dropout = [0.25, 0.25, 0.5, 0.25, 0.5, 0.5, 0.5, 0.5, 0.5]
+            opt_name = ['adadelta', 'adam', 'rmsprop', 'adadelta', 'adam',
+                        'rmsprop', 'adadelta', 'adam', 'rmsprop']
+            for i in range(len(n_conv)):
+                [conf_name, model] = build_model(
+                    window_size, n_feature=_SEQ_FEATURE,
+                    n_chan=_SEQ_CHANNEL, n_conv=n_conv[i],
+                    n_dense=n_dense[i], k_shapes=k_shapes,
+                    dense_shape=dense_shape,
+                    opt_name=opt_name[i], pooling=pooling[i],
+                    dropout=dropout[i])
+                [model, result] = train_model(model, train_patient,
+                                              type_name=_DETECTION_PROBLEM,
+                                              stopping_th=_EARLY_STOPPING_TH)
+                with open("Output.txt", "a") as text_file:
+                    print("\nConfiguration:\n" + conf_name + '->Acc: '
+                          + str(result[0][1]) + ';Epochs: ' +
+                          str(result[1]) + ';Time: ' + str(result[2])
+                          + ';Final Status: ' + result[3],
+                          file=text_file)
+    
+                save_model(model, 'model_' + str(i+j))
 
-        model.compile(loss='binary_crossentropy',
-                      optimizer='rmsprop',
-                      metrics=['accuracy'])
         
-    # Train
-    if _TRAIN_MODEL:
-        [model, result] = train_model(model, train_patient,
-                                      type_name=_DETECTION_PROBLEM,
-                                      stopping_th=_EARLY_STOPPING_TH)
-        # Save model
-        save_model(model, 'model_' + _DETECTION_PROBLEM)
-        print('VALIDATION ACC: ' + str(result[1]))
         
-    if _TEST_MODEL:
-        result = test_model(model, test_patient,
-                            time_window=_T_WINDOW,
-                   window_overlaping=_WINDOW_OVERLAP,
-                   data_freq=_SEQ_FREQ, type_name=_DETECTION_PROBLEM)
-        print('TEST ACC: ' + str(result[1]))
+    #     # Train
+    #     if _TRAIN_MODEL:
+    #         train_it = 0
+    #         [model, result] = train_model(model, train_patient,
+    #                                       type_name=_DETECTION_PROBLEM,
+    #                                       stopping_th=_EARLY_STOPPING_TH)
+    #         # Save model
+    #         # save_model(model, 'model_' + _DETECTION_PROBLEM + train_it)
+    #         print('VALIDATION ACC: ' + str(result[1]))
+    #
+    # if _TEST_MODEL:
+    #     result = test_model(model, test_patient,
+    #                         time_window=_T_WINDOW,
+    #                window_overlaping=_WINDOW_OVERLAP,
+    #                data_freq=_SEQ_FREQ, type_name=_DETECTION_PROBLEM)
+    #     print('TEST ACC: ' + str(result[1]))
     print('END')
 
 # EOF

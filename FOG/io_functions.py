@@ -20,6 +20,7 @@ from operator import itemgetter
 
 from keras.models import model_from_json
 
+
 _WORKING_DIR = getcwd()
 _DEFAULT_DATA_PATH = _WORKING_DIR + '/../../data/'
 _DEFAULT_RAW_DATA_PATH = _WORKING_DIR + '/../../RAW_DATA/'
@@ -27,6 +28,16 @@ _DEFAULT_MODEL_PATH = _WORKING_DIR + '/../../model/'
 _DEFAULT_DATA_EXT = '.csv'
 _DEFAULT_RAW_DATA_EXT = '.MAT'
 _DEFAULT_MODEL_EXT = '.h5'
+_CORRECT_PATIENTS = ['fsl11', 'fsl13', 'fsl14', 'fsl15', 'fsl17',
+                     'fsl18', 'fsl20', 'mac03', 'mac04', 'mac07',
+                     'mac10', 'mac12', 'mac20', 'nui01', 'nui13',
+                     'tek04', 'tek07', 'tek12', 'tek23', 'tek24',
+                     'tek25']
+
+
+def is_correct(patient_name):
+    """Check if patient is in the correct patients list"""
+    return patient_name in _CORRECT_PATIENTS
 
 
 def silent_remove(path):
@@ -136,7 +147,7 @@ def get_dataset(data_file_path, label_pos=9):
     
     
 def get_data_path(type_name='', data_path=_DEFAULT_DATA_PATH,
-                  ext=_DEFAULT_DATA_EXT, group=False):
+                  ext=_DEFAULT_DATA_EXT, group=False, check=False):
     """Get data paths
     
     Parameters
@@ -149,7 +160,9 @@ def get_data_path(type_name='', data_path=_DEFAULT_DATA_PATH,
         Files extension.
     group : bool, optional, default: False
         Activate the feature of pairing file-names patient wisely.
-        
+    check : bool, optional, default: False
+        Check if patient belongs to the 'correct patients' group.
+    
     Return
     ------
     dataset_path : str array-like, shape=[n_files,]
@@ -158,11 +171,12 @@ def get_data_path(type_name='', data_path=_DEFAULT_DATA_PATH,
 
     if group:
         dataset_path_sparse = [[[join(data_path, f), f[:f.find('.')]],
-                                f[: (f.rfind('_'))]] for f in
+                                f[:(f.rfind('_'))]] for f in
                                listdir(data_path) if
                                isfile(join(data_path, f)) and
                                f.endswith(ext) and
-                               f.startswith(type_name)]
+                               f.startswith(type_name) and (not check
+                               or is_correct(f[:(f.rfind('_'))]))]
         sorted_input = sorted(dataset_path_sparse, key=itemgetter(1))
         file_group = groupby(sorted_input, key=itemgetter(1))
         dataset_path = {k: [x[0] for x in v] for k, v in file_group}
@@ -170,13 +184,13 @@ def get_data_path(type_name='', data_path=_DEFAULT_DATA_PATH,
         dataset_path = [[join(data_path, f), f[:f.find('.')]] for f in
                         listdir(data_path)
                         if isfile(join(data_path, f)) and f.endswith(
-                ext) and f.startswith(type_name)]
+                        ext) and f.startswith(type_name)]
 
     return dataset_path
 
 
 def get_raw_data_path(data_path=_DEFAULT_RAW_DATA_PATH,
-                      ext=_DEFAULT_RAW_DATA_EXT, group=False):
+                      ext=_DEFAULT_RAW_DATA_EXT, group=True):
     """Get raw data paths
 
         Parameters
@@ -193,7 +207,8 @@ def get_raw_data_path(data_path=_DEFAULT_RAW_DATA_PATH,
         dataset_path : str array-like, shape=[n_files,]
 
         """
-    return get_data_path(data_path=data_path, ext=ext, group=group)
+    return get_data_path(data_path=data_path, ext=ext, group=group,
+                         check=True)
 
 
 def save_model(model_, name):
