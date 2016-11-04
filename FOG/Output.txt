@@ -1,0 +1,21 @@
+
+Configuration:
+C(32, 159)-DR(0.25)-C(32, 71)-DR(0.25)-C(64, 51)-DR(0.25)-DN(128)-D(0.25)-DN(128)-D(0.25)-DN(1, Sigmoid)|adadelta->Acc: 0.682716836735;Epochs: 2;Time: -1869.2823210000001;Final Status: OK
+
+Configuration:
+C(32, 159)-P-DR(0.25)-C(32, 71)-P-DR(0.25)-C(64, 51)-P-DR(0.25)-DN(128)-D(0.25)-DN(128)-D(0.25)-DN(1, Sigmoid)|adam->Acc: 0.657206632653;Epochs: 4;Time: -2111.297735;Final Status: OK
+
+Configuration:
+C(32, 159)-DR(0.5)-C(32, 71)-DR(0.5)-C(64, 51)-DR(0.5)-DN(128)-D(0.5)-DN(128)-D(0.5)-DN(1, Sigmoid)|rmsprop->Acc: 0.508928571429;Epochs: 2;Time: -1657.8456690000003;Final Status: OK
+
+Configuration:
+C(32, 159)-P-DR(0.25)-C(32, 71)-P-DR(0.25)-C(64, 51)-P-DR(0.25)-C(64, 31)-P-DR(0.25)-DN(128)-D(0.25)-DN(128)-D(0.25)-DN(1, Sigmoid)|adadelta->Acc: 0.592474489796;Epochs: 2;Time: -1034.903163;Final Status: OK
+
+Configuration:
+C(32, 159)-DR(0.5)-C(32, 71)-DR(0.5)-C(64, 51)-DR(0.5)-C(64, 31)-DR(0.5)-DN(128)-D(0.5)-DN(128)-D(0.5)-DN(256)-D(0.5)-DN(1, Sigmoid)|adam->Acc: 0.558354591837;Epochs: 2;Time: -1999.9937140000002;Final Status: OK
+
+Configuration:
+C(32, 159)-P-DR(0.5)-C(32, 71)-P-DR(0.5)-C(64, 51)-P-DR(0.5)-C(64, 31)-P-DR(0.5)-DN(128)-D(0.5)-DN(128)-D(0.5)-DN(256)-D(0.5)-DN(1, Sigmoid)|rmsprop->Acc: 0.716198979592;Epochs: 3;Time: -1496.046359;Final Status: OK
+
+Configuration:
+C(32, 159)-P-DR(0.5)-C(32, 71)-P-DR(0.5)-C(64, 51)-P-DR(0.5)-C(64, 31)-P-DR(0.5)-DN(128)-D(0.5)-DN(128)-D(0.5)-DN(1, Sigmoid)|adadelta=>Epochs: 2;Time: 1144.179626;Final Status: OK;Acc: 0.624681122449

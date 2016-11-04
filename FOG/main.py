@@ -30,8 +30,8 @@ _SEQ_FEATURE = 9
 _N_CLASS = 2
 _N_EPOCH = 50
 _N_FOLD = 1
-_T_WINDOW = 3.2
-_WINDOW_OVERLAP = 0.5
+_T_WINDOW = 1
+# _WINDOW_OVERLAP = 0.5
 _SEQ_FREQ = 40
 _DETECTION_PROBLEM = 'walk'
 _PREPROCESS_FINISHED = True
@@ -41,13 +41,13 @@ _TRAIN_MODEL = True
 _TEST_MODEL = False
 _BATCH_SIZE = 64
 if _DETECTION_PROBLEM == 'fog':
-    _N_TRAIN_SAMPLE = 674880
-    _N_VAL_SAMPLE = 6560
-    _N_TEST_SAMPLE = 12192
+    _N_TRAIN_SAMPLE = 338944
+    _N_VAL_SAMPLE = 3136
+    _N_TEST_SAMPLE = 5888
 elif _DETECTION_PROBLEM == 'walk':
-    _N_TRAIN_SAMPLE = 67488
-    _N_VAL_SAMPLE = 6560
-    _N_TEST_SAMPLE = 12192
+    _N_TRAIN_SAMPLE = 338944
+    _N_VAL_SAMPLE = 3136
+    _N_TEST_SAMPLE = 5888
 
 _EARLY_STOPPING_TH = 0.01
 _MAX_Q_SIZE = 5
@@ -212,7 +212,7 @@ def aux_generator():
 
 def single_train(model_, train_file, validation_file,
                  n_epoch=_N_EPOCH, time_window=_T_WINDOW,
-                 window_overlaping=_WINDOW_OVERLAP,
+                 # window_overlaping=_WINDOW_OVERLAP,
                  data_freq=_SEQ_FREQ, stopping_th=_EARLY_STOPPING_TH):
     """Train the model
     
@@ -220,15 +220,15 @@ def single_train(model_, train_file, validation_file,
     """
 
     window_size = int(time_window * data_freq)
-    window_spacing = int(round(window_size * (1 - window_overlaping)))
+    # window_spacing = int(round(window_size * (1 - window_overlaping)))
     
     train_generator = generate_arrays_from_file(
-        model_, train_file, window_size, window_spacing,
-        batch_size=_BATCH_SIZE, augment_count=[2, 9],
+        model_, train_file, window_size, #window_spacing,
+        batch_size=_BATCH_SIZE, augment_count=[3, 7],
         augement_data_type='all')
 
     validation_generator = generate_arrays_from_file(
-                model_, validation_file, window_size, window_spacing,
+                model_, validation_file, window_size, #window_spacing,
                 batch_size=_BATCH_SIZE)
     prev_acc = 0
     result_ = None
@@ -270,12 +270,12 @@ def single_train(model_, train_file, validation_file,
 
     print('Train finished')
     print('Validation acc: ' + str(acc))
-    return [model_, [result_, epochs, (time_count - time.clock()),
+    return [model_, [result_, epochs, (time.clock() - time_count),
                      status]]
 
 
 def test_model(model_, test_patient, time_window=_T_WINDOW,
-                 window_overlaping=_WINDOW_OVERLAP,
+                 # window_overlaping=_WINDOW_OVERLAP,
                  data_freq=_SEQ_FREQ, type_name=_DETECTION_PROBLEM):
     """Test the model
 
@@ -331,10 +331,11 @@ if __name__ == '__main__':
             dense_shape = [128, 128, 256]
             pooling = [False, True, False, True, False, True, True,
                        True, True]
-            dropout = [0.25, 0.25, 0.5, 0.25, 0.5, 0.5, 0.5, 0.5, 0.5]
+            dropout = [0.25, 0.5, 0.25, 0.5, 0.25, 0.5, 0.25, 0.5,
+                       0.5]
             opt_name = ['adadelta', 'adam', 'rmsprop', 'adadelta', 'adam',
                         'rmsprop', 'adadelta', 'adam', 'rmsprop']
-            for i in range(len(n_conv)):
+            for i in range(3, len(n_conv)):
                 [conf_name, model] = build_model(
                     window_size, n_feature=_SEQ_FEATURE,
                     n_chan=_SEQ_CHANNEL, n_conv=n_conv[i],
@@ -342,14 +343,16 @@ if __name__ == '__main__':
                     dense_shape=dense_shape,
                     opt_name=opt_name[i], pooling=pooling[i],
                     dropout=dropout[i])
-                [model, result] = train_model(model, train_patient,
-                                              type_name=_DETECTION_PROBLEM,
-                                              stopping_th=_EARLY_STOPPING_TH)
+                [model, result] = train_model(
+                    model, train_patient,
+                    type_name=_DETECTION_PROBLEM,
+                    stopping_th=_EARLY_STOPPING_TH)
                 with open("Output.txt", "a") as text_file:
-                    print("\nConfiguration:\n" + conf_name + '->Acc: '
-                          + str(result[0][1]) + ';Epochs: ' +
+                    print("\nConfiguration:\n" + conf_name +
+                          '=>Epochs: ' +
                           str(result[1]) + ';Time: ' + str(result[2])
-                          + ';Final Status: ' + result[3],
+                          + ';Final Status: ' + result[3] + ';Acc: '
+                          + str(result[0][1]),
                           file=text_file)
     
                 save_model(model, 'model_' + str(i+j))

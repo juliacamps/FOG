@@ -11,13 +11,16 @@ from keras.layers import Dense
 from keras.layers import Dropout
 from keras.layers import Flatten
 from keras.callbacks import Callback
-from keras.layers.convolutional import Convolution2D
-from keras.layers.convolutional import MaxPooling2D
+# from keras.layers.convolutional import Convolution2D
+from keras.layers.convolutional import AtrousConvolution1D
+from keras.layers.convolutional import Convolution1D
+from keras.layers.convolutional import MaxPooling1D
+# from keras.layers.convolutional import MaxPooling2D
 from keras.layers.core import SpatialDropout2D
 
 
 def build_model(window_size, n_feature=9, n_chan=1, n_conv=1,
-                n_dense=1, k_shapes=[[64, 9, 9]], dense_shape=[128],
+                n_dense=1, k_shapes=[[64, 3]], dense_shape=[128],
                 opt_name='adadelta', pooling=False, dropout=0.5):
     """Build the model"""
     model_ = Sequential()
@@ -25,12 +28,19 @@ def build_model(window_size, n_feature=9, n_chan=1, n_conv=1,
     for i in range(n_conv):
         n_kernel = k_shapes[i][0]
         h_kernel = k_shapes[i][1]
-        w_kernel = k_shapes[i][2]
-        model_.add(Convolution2D(n_kernel, h_kernel, w_kernel,
-                                 border_mode='same',
-                                 input_shape=(window_size,
-                                              n_feature, n_chan),
-                                 activation='relu'))
+        # w_kernel = k_shapes[i][2]
+        model_.add(AtrousConvolution1D(n_kernel, h_kernel,
+                                       atrous_rate=2,
+                                       init='uniform',
+                                       border_mode='same',
+                                       input_shape=(window_size,
+                                                    n_feature),
+                                       activation='relu'))
+        # model_.add(Convolution2D(n_kernel, h_kernel, w_kernel,
+        #                          border_mode='same',
+        #                          input_shape=(window_size,
+        #                                       n_feature, n_chan),
+        #                          activation='relu'))
         name = (name + 'C(' + str(n_kernel) + ', '
                 + str(h_kernel) + str(w_kernel)) + ')-'
         if pooling:
