@@ -120,7 +120,7 @@ def generate_arrays_from_file(model_, path_list, window_size,
         # print('Total number of samples in all data: ')
         # print(aux_count)
         # print('Num Batches: ' + str(batch_count))
-        # print('Theoretical number of samples: ' + str(
+        # print('Available number of samples: ' + str(
         #     n_samples))
         # print('Percentage of FOG:')
         # print(y_cum / n_samples)
@@ -324,24 +324,24 @@ if __name__ == '__main__':
 
     batch_size = 64
     data_freq = 40
-    n_shift = 3
-    n_rotate = 6
+    n_shift = 2
+    n_rotate = 4
     time_window = 1
     window_size = int(time_window * data_freq)
 
+    print('TRAIN')
     generate_arrays_from_file(model, train_file, window_size,
                               batch_size=batch_size,
                               augment_count=[n_shift, n_rotate],
                               augement_data_type='all')
     
-    print('END1')
+    print('VALIDATION')
     generate_arrays_from_file(model, val_file, window_size,
                               batch_size=batch_size)
-    print('END2')
+    
+    print('TEST')
     generate_arrays_from_file(model, test_file, window_size,
                               batch_size=batch_size)
-    print('END3')
-    # print('END')
-
+    print('END')
 
 # EOF

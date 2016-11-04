@@ -29,16 +29,18 @@ _LOAD_MODEL = False
 _TRAIN_MODEL = True
 _TEST_MODEL = False
 _BATCH_SIZE = 64
-_N_TRAIN_SAMPLE = 1003520
+_N_TRAIN_SAMPLE = 537600
 _N_VAL_SAMPLE = 10368
 _N_TEST_SAMPLE = 19392
-
+_PERCENTAGE_OF_POSITIVE_TRAIN = 0.581491815476
+_PERCENTAGE_OF_POSITIVE_VAL = 0.550636574074
+_PERCENTAGE_OF_POSITIVE_TEST = 0.581941006601
 _EARLY_STOPPING_TH = 0.01
 _MAX_Q_SIZE = 5
 _REPRODUCIBILITY = True
 _SEED = 277
-_N_SHIFT = 3
-_N_ROTATE = 6
+_N_SHIFT = 2
+_N_ROTATE = 4
 
 
 def load_trained_model(name='model'):
@@ -122,8 +124,12 @@ def single_train(model_, train_file, validation_file,
     time_count = time.clock()
     epochs = 0
     status = 'OK'
+    
+    print('TRAINING MODEL: ' + model.conf_name)
 
     for i in range(n_epoch):
+        print('\n==================\nSTARTING EPOCH: ' + str(i)
+              + '\n========================')
         result_ = [0, 0]
         try:
             model_.fit_generator(train_generator,
@@ -152,9 +158,9 @@ def single_train(model_, train_file, validation_file,
                     print('Training Finished due to EARLY STOPPING')
                     break
                 prev_acc = acc
-
-    print('Train finished')
-    print('Validation acc: ' + str(acc))
+        print('==================\nENDED EPOCH: ' + str(i)
+              + '\n========================\n')
+    print('TRAINING FINISHED WITH VALIDATION ACC: ' + str(acc))
     return [model_, [result_, epochs, (time.clock() - time_count),
                      status]]
 
@@ -205,50 +211,55 @@ if __name__ == '__main__':
     if _LOAD_MODEL:
         model = load_trained_model('model_fog')
     else:
-        for j in range(10):
-            window_size = _SEQ_FREQ * _T_WINDOW
+        initializations = ['lecun_uniform', 'glorot_normal',
+                           'glorot_uniform', 'he_normal',
+                           'he_uniform']
+        n_conv = [2, 2, 3, 3, 3, 4, 4, 4, 5]
+        n_dense = [1, 2, 2, 2, 2, 3, 3, 3, 3]
+        k_shapes = [[32, 7], [32, 5], [64, 3], [64, 3],
+                    [128, 3]]
+        dense_shape = [128, 128, 256]
+        pooling = [False, True, False, True, False, True, True,
+                   True, True]
+        dropout = [0.25, 0.5, 0.25, 0.5, 0.25, 0.5, 0.25, 0.5,
+                   0.5]
+        opt_name = ['adadelta', 'adam', 'rmsprop', 'adadelta',
+                    'adam', 'rmsprop', 'adadelta', 'adam',
+                    'rmsprop']
+        window_size = _SEQ_FREQ * _T_WINDOW
+        for j in range(len(initializations)):
             model = build_model(window_size)
-            n_conv = [3, 3, 3, 4, 4, 4, 5, 5, 5]
-            n_dense = [2, 2, 2, 2, 3, 3, 3, 3, 3]
-            k_shapes = [[32, 11], [32, 7], [64, 5], [64, 3],
-                        [128, 3]]
-            dense_shape = [128, 128, 256]
-            pooling = [False, True, False, True, False, True, True,
-                       True, True]
-            dropout = [0.25, 0.5, 0.25, 0.5, 0.25, 0.5, 0.25, 0.5,
-                       0.5]
-            opt_name = ['adadelta', 'adam', 'rmsprop', 'adadelta', 'adam',
-                        'rmsprop', 'adadelta', 'adam', 'rmsprop']
-            init = ['glorot_uniform', 'he_normal', 'he_uniform',
-                    'lecun_uniform', 'uniform', 'glorot_uniform',
-                    'he_normal', 'he_uniform', 'glorot_normal']
+            init = initializations[j]
             for i in range(len(n_conv)):
                 [conf_name, model] = build_model(
                     window_size, n_feature=_SEQ_FEATURE,
                     n_conv=n_conv[i], n_dense=n_dense[i],
                     k_shapes=k_shapes, dense_shape=dense_shape,
                     opt_name=opt_name[i], pooling=pooling[i],
-                    dropout=dropout[i], init=init[i])
+                    dropout=dropout[i], init=init)
+                model.conf_name = conf_name
                 [model, result] = train_model(
                     model, train_patient,
                     type_name=_DETECTION_PROBLEM,
                     stopping_th=_EARLY_STOPPING_TH)
                 with open("Output.txt", "a") as text_file:
                     print("\nConfiguration:\n" + conf_name +
-                          '=>Epochs: ' +
-                          str(result[1]) + ';Time: ' + str(result[2])
-                          + ';Final Status: ' + result[3] + ';Acc: '
-                          + str(result[0][1]),
+                          '\nEpochs: ' +
+                          str(result[1]) + '\nTime: ' + str(result[2])
+                          + '\nFinal Status: ' + result[3]
+                          + '\nValidation acc: ' + str(result[0][1])
+                          + '\nPercentage of positive train samples: '
+                          + str(_PERCENTAGE_OF_POSITIVE_TRAIN)
+                          + '\nPercentage of positive val samples: '
+                          + str(_PERCENTAGE_OF_POSITIVE_VAL)
+                          + '\nNumber of training samples: '
+                          + str(_N_TRAIN_SAMPLE)
+                          + '\n Number of model parameters: ' +
+                          str(model.count_params()),
                           file=text_file)
     
-                save_model(model, 'model_' + str(i+j))
+                save_model(model, 'model_' + str(i + (j*len(n_conv))))
 
-    # if _TEST_MODEL:
-    #     result = test_model(model, test_patient,
-    #                         time_window=_T_WINDOW,
-    #                window_overlaping=_WINDOW_OVERLAP,
-    #                data_freq=_SEQ_FREQ, type_name=_DETECTION_PROBLEM)
-    #     print('TEST ACC: ' + str(result[1]))
     print('END')
 
 # EOF
