@@ -6,7 +6,8 @@ __pycache__/
 # SCRIPTS #
 ###########
 data_parser.py
-_* # scripts for testing
+io_functions.py
+_*
 
 # DATA #
 ########

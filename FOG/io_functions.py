@@ -28,11 +28,38 @@ _DEFAULT_MODEL_PATH = _WORKING_DIR + '/../../model/'
 _DEFAULT_DATA_EXT = '.csv'
 _DEFAULT_RAW_DATA_EXT = '.MAT'
 _DEFAULT_MODEL_EXT = '.h5'
+
+# META-DATA
 _CORRECT_PATIENTS = ['fsl11', 'fsl13', 'fsl14', 'fsl15', 'fsl17',
                      'fsl18', 'fsl20', 'mac03', 'mac04', 'mac07',
                      'mac10', 'mac12', 'mac20', 'nui01', 'nui13',
                      'tek04', 'tek07', 'tek12', 'tek23', 'tek24',
                      'tek25']
+_PATIENT_LIST = ['nui16', 'tek07', 'mac03', 'tek04', 'tek24',
+                 'mac17', 'mac21', 'tek25', 'mac04', 'mac07',
+                 'tek12', 'fsl11', 'mac12', 'mac19', 'tek23',
+                 'fsl18', 'fsl14', 'nui13', 'fsl24', 'fsl20',
+                 'fsl16', 'fsl15', 'fsl17', 'mac10', 'fsl13',
+                 'nui14', 'nui06', 'mac20', 'nui01']
+_VAL_PATIENT_DEFAULT = ['mac20', 'tek12', 'fsl13']
+_TEST_PATIENT_DEFAULT = ['fsl18', 'mac10', 'tek24', 'nui13', 'tek23']
+_DATA_STD = [27.8379884006, 34.0541798945, 20.2561325897,
+             3.4419919171, 3.4928714944, 3.7259256299, 0.2658480797,
+             0.2957936948, 0.3050834012]
+_DATA_MEAN = [-22.3235421779, -14.2307838391, 9.1812591243,
+              -1.9621648871, -7.9875374392, -0.7413856581,
+              0.2767370913, 0.7317886181, 0.1967207557]
+
+
+def get_std_mean():
+    """"""
+    return [_DATA_STD, _DATA_MEAN]
+
+
+def get_patient_names():
+    """"""
+    return [_PATIENT_LIST, _VAL_PATIENT_DEFAULT,
+            _TEST_PATIENT_DEFAULT]
 
 
 def is_correct(patient_name):

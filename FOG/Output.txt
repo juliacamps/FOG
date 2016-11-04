@@ -41,3 +41,9 @@ C(32, 7)-P-DR(0.5)-C(64, 5)-P-DR(0.5)-C(64, 3)-P-DR(0.5)-DN(128)-D(0.5)-DN(128)-
 
 Configuration:
 C(32, 7)-P-DR(0.25)-C(64, 5)-P-DR(0.25)-C(64, 3)-P-DR(0.25)-C(128, 3)-P-DR(0.25)-DN(128)-D(0.25)-DN(128)-D(0.25)-DN(256)-D(0.25)-DN(1, Sigmoid)|INIT:he_normal|adadelta=>Epochs: 3;Time: 2590.4428229999994;Final Status: OK;Acc: 0.684606481481
+
+Configuration:
+C(32, 7)-P-DR(0.5)-C(64, 5)-P-DR(0.5)-C(64, 3)-P-DR(0.5)-C(128, 3)-P-DR(0.5)-DN(128)-D(0.5)-DN(128)-D(0.5)-DN(256)-D(0.5)-DN(1, Sigmoid)|INIT:he_uniform|adam=>Epochs: 2;Time: 1672.0244869999988;Final Status: OK;Acc: 0.585069444444
+
+Configuration:
+C(32, 7)-P-DR(0.5)-C(64, 5)-P-DR(0.5)-C(64, 3)-P-DR(0.5)-C(128, 3)-P-DR(0.5)-DN(128)-D(0.5)-DN(128)-D(0.5)-DN(256)-D(0.5)-DN(1, Sigmoid)|INIT:glorot_normal|rmsprop=>Epochs: 2;Time: 1638.1215300000003;Final Status: OK;Acc: 0.516010802469

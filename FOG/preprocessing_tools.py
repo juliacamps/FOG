@@ -12,17 +12,12 @@ from FOG.io_functions import save_matrix_data
 from FOG.io_functions import get_all_patient
 from FOG.io_functions import get_patient_data_files
 from FOG.io_functions import is_correct
+from FOG.io_functions import get_patient_names
+from FOG.io_functions import get_std_mean
 
-
-_DATA_STD = [27.8379884006, 34.0541798945, 20.2561325897,
-             3.4419919171, 3.4928714944, 3.7259256299, 0.2658480797,
-             0.2957936948, 0.3050834012]
-_DATA_MEAN = [-22.3235421779, -14.2307838391, 9.1812591243,
-              -1.9621648871, -7.9875374392, -0.7413856581,
-              0.2767370913, 0.7317886181, 0.1967207557]
-
-_VAL_PATIENT_DEFAULT = ['mac20', 'tek12', 'fsl13']
-_TEST_PATIENT_DEFAULT = ['fsl18', 'mac10', 'tek24', 'nui13', 'tek23']
+[_DATA_STD, _DATA_MEAN] = get_std_mean()
+[_PATIENT_LIST, _VAL_PATIENT_DEFAULT, _TEST_PATIENT_DEFAULT] = \
+    get_patient_names()
 _DATA_AUGMENTATION = ['shift', 'noise']
 _SHIFT_RANGE = [0, 1]
 _ROT_RANGE = np.array((-20, 20)) * np.pi / 180
@@ -308,12 +303,7 @@ if __name__ == '__main__':
         np.random.seed(seed)
         rd.seed(seed)
     
-    patient_list = ['nui16', 'tek07', 'mac03', 'tek04', 'tek24',
-                    'mac17', 'mac21', 'tek25', 'mac04', 'mac07',
-                    'tek12','fsl11', 'mac12', 'mac19', 'tek23',
-                    'fsl18', 'fsl14', 'nui13', 'fsl24', 'fsl20',
-                    'fsl16', 'fsl15', 'fsl17', 'mac10', 'fsl13',
-                    'nui14', 'nui06', 'mac20', 'nui01']
+    patient_list = _PATIENT_LIST
     
     train_data = [patient for patient in patient_list
                   if (patient not in _VAL_PATIENT_DEFAULT
