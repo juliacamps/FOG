@@ -1,0 +1,11 @@
+
+Configuration:
+C(32, 5)-DR(0.25)-DN(128)-D(0.25)-DN(1, Sigmoid)|INIT:lecun_uniform|adadelta
+Epochs: 3
+Time: 1206.525165
+Final Status: OK
+Validation acc: 0.56356095679
+Percentage of positive train samples: 0.581491815476
+Percentage of positive val samples: 0.550636574074
+Number of training samples: 537600
+ Number of model parameters: 171297

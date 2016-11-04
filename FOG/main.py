@@ -159,7 +159,7 @@ def single_train(model_, train_file, validation_file,
                     break
                 prev_acc = acc
         print('==================\nENDED EPOCH: ' + str(i)
-              + '\n========================\n')
+              + '\n========================')
     print('TRAINING FINISHED WITH VALIDATION ACC: ' + str(acc))
     return [model_, [result_, epochs, (time.clock() - time_count),
                      status]]
