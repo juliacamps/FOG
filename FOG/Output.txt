@@ -38,3 +38,6 @@ C(32, 7)-DR(0.25)-C(64, 5)-DR(0.25)-C(64, 3)-DR(0.25)-DN(128)-D(0.25)-DN(128)-D(
 
 Configuration:
 C(32, 7)-P-DR(0.5)-C(64, 5)-P-DR(0.5)-C(64, 3)-P-DR(0.5)-DN(128)-D(0.5)-DN(128)-D(0.5)-DN(256)-D(0.5)-DN(1, Sigmoid)|INIT:glorot_uniform|rmsprop=>Epochs: 2;Time: 1593.864146;Final Status: OK;Acc: 0.50887345679
+
+Configuration:
+C(32, 7)-P-DR(0.25)-C(64, 5)-P-DR(0.25)-C(64, 3)-P-DR(0.25)-C(128, 3)-P-DR(0.25)-DN(128)-D(0.25)-DN(128)-D(0.25)-DN(256)-D(0.25)-DN(1, Sigmoid)|INIT:he_normal|adadelta=>Epochs: 3;Time: 2590.4428229999994;Final Status: OK;Acc: 0.684606481481

@@ -1,6 +1,6 @@
 # FOLDERS TO BE IGNORED #
 #########################
-aux/
+scripts/
 __pycache__/
 
 # SCRIPTS #
