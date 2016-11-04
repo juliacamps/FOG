@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="99746db7-fa54-4205-8a0c-04b335e5a43f" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/FOG/Output.txt" afterPath="$PROJECT_DIR$/FOG/Output.txt" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/FOG/main.py" afterPath="$PROJECT_DIR$/FOG/main.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/FOG/models.py" afterPath="$PROJECT_DIR$/FOG/models.py" />
@@ -21,9 +20,9 @@
   <component name="CoverageDataManager">
     <SUITE FILE_PATH="coverage/FOG$prova.coverage" NAME="prova Coverage Results" MODIFIED="1478115655868" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/FOG/aux" />
     <SUITE FILE_PATH="coverage/FOG$data_parser.coverage" NAME="data_parser Coverage Results" MODIFIED="1478089122714" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/FOG/scripts" />
-    <SUITE FILE_PATH="coverage/FOG$preprocessing_tools.coverage" NAME="preprocessing_tools Coverage Results" MODIFIED="1478259910428" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/FOG" />
+    <SUITE FILE_PATH="coverage/FOG$preprocessing_tools.coverage" NAME="preprocessing_tools Coverage Results" MODIFIED="1478264563427" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/FOG" />
     <SUITE FILE_PATH="coverage/FOG$data_parser__1_.coverage" NAME="data_parser (1) Coverage Results" MODIFIED="1478106166016" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/FOG" />
-    <SUITE FILE_PATH="coverage/FOG$main.coverage" NAME="main Coverage Results" MODIFIED="1478254645627" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/FOG" />
+    <SUITE FILE_PATH="coverage/FOG$main.coverage" NAME="main Coverage Results" MODIFIED="1478265196866" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/FOG" />
   </component>
   <component name="CreatePatchCommitExecutor">
     <option name="PATCH_PATH" value="" />
@@ -34,19 +33,15 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="main.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="main.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/FOG/main.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="168">
-              <caret line="41" column="16" selection-start-line="41" selection-start-column="16" selection-end-line="41" selection-end-column="16" />
+            <state relative-caret-position="-1391">
+              <caret line="27" column="19" selection-start-line="27" selection-start-column="19" selection-end-line="27" selection-end-column="19" />
               <folding>
                 <element signature="e#125#143#0" expanded="true" />
-                <element signature="e#1421#1509#0" expanded="false" />
-                <element signature="e#1509#1529#0" expanded="false" />
-                <element signature="e#2704#2940#0" expanded="false" />
-                <element signature="e#4944#6167#0" expanded="false" />
-                <element signature="e#6195#6271#0" expanded="false" />
-                <element signature="e#8731#9535#0" expanded="false" />
+                <element signature="e#933#1169#0" expanded="false" />
+                <element signature="e#4914#5718#0" expanded="false" />
               </folding>
             </state>
           </provider>
@@ -55,20 +50,20 @@
       <file leaf-file-name="Output.txt" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/FOG/Output.txt">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="567">
-              <caret line="20" column="193" selection-start-line="20" selection-start-column="193" selection-end-line="20" selection-end-column="193" />
+            <state relative-caret-position="453">
+              <caret line="22" column="0" selection-start-line="22" selection-start-column="0" selection-end-line="22" selection-end-column="0" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="models.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="models.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/FOG/models.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="441">
-              <caret line="33" column="54" selection-start-line="33" selection-start-column="54" selection-end-line="33" selection-end-column="54" />
+            <state relative-caret-position="-378">
+              <caret line="3" column="30" selection-start-line="3" selection-start-column="30" selection-end-line="3" selection-end-column="30" />
               <folding>
-                <element signature="e#125#143#0" expanded="true" />
+                <element signature="e#125#160#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -89,7 +84,7 @@
       <file leaf-file-name="io_functions.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/FOG/io_functions.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="856">
+            <state relative-caret-position="4573">
               <caret line="218" column="0" selection-start-line="218" selection-start-column="0" selection-end-line="218" selection-end-column="0" />
               <folding>
                 <element signature="e#142#154#0" expanded="true" />
@@ -101,16 +96,18 @@
       <file leaf-file-name="preprocessing_tools.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/FOG/preprocessing_tools.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="6825">
-              <caret line="384" column="51" selection-start-line="384" selection-start-column="51" selection-end-line="384" selection-end-column="51" />
+            <state relative-caret-position="362">
+              <caret line="132" column="33" selection-start-line="132" selection-start-column="33" selection-end-line="132" selection-end-column="33" />
               <folding>
                 <element signature="e#142#160#0" expanded="true" />
-                <element signature="e#5860#5998#0" expanded="false" />
-                <element signature="e#6029#6085#0" expanded="false" />
-                <element signature="e#8465#8614#0" expanded="false" />
-                <element signature="e#9453#9811#0" expanded="false" />
-                <element signature="e#9841#10388#0" expanded="false" />
-                <element signature="e#11051#11100#0" expanded="false" />
+                <element signature="e#5334#5472#0" expanded="false" />
+                <element signature="e#5503#5559#0" expanded="false" />
+                <element signature="e#6725#6908#0" expanded="false" />
+                <element signature="e#6935#7084#0" expanded="false" />
+                <element signature="e#7147#7884#0" expanded="false" />
+                <element signature="e#7923#8281#0" expanded="false" />
+                <element signature="e#8311#8858#0" expanded="false" />
+                <element signature="e#9521#9570#0" expanded="false" />
               </folding>
             </state>
           </provider>
@@ -119,7 +116,7 @@
       <file leaf-file-name="data_parser.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/FOG/data_parser.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="3612">
+            <state relative-caret-position="3801">
               <caret line="181" column="39" selection-start-line="181" selection-start-column="39" selection-end-line="181" selection-end-column="39" />
               <folding>
                 <element signature="e#140#158#0" expanded="true" />
@@ -147,10 +144,10 @@
         <option value="$PROJECT_DIR$/FOG/io_functions.py" />
         <option value="$PROJECT_DIR$/FOG/data_parser.py" />
         <option value="$PROJECT_DIR$/FOG/aux/prova.py" />
-        <option value="$PROJECT_DIR$/FOG/Output.txt" />
-        <option value="$PROJECT_DIR$/FOG/main.py" />
-        <option value="$PROJECT_DIR$/FOG/preprocessing_tools.py" />
         <option value="$PROJECT_DIR$/FOG/models.py" />
+        <option value="$PROJECT_DIR$/FOG/Output.txt" />
+        <option value="$PROJECT_DIR$/FOG/preprocessing_tools.py" />
+        <option value="$PROJECT_DIR$/FOG/main.py" />
       </list>
     </option>
   </component>
@@ -259,7 +256,7 @@
       <recent name="$PROJECT_DIR$/FOG" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.preprocessing_tools">
+  <component name="RunManager" selected="Python.main">
     <configuration default="false" name="prova" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -567,8 +564,8 @@
     </list>
     <recent_temporary>
       <list size="5">
-        <item index="0" class="java.lang.String" itemvalue="Python.preprocessing_tools" />
-        <item index="1" class="java.lang.String" itemvalue="Python.main" />
+        <item index="0" class="java.lang.String" itemvalue="Python.main" />
+        <item index="1" class="java.lang.String" itemvalue="Python.preprocessing_tools" />
         <item index="2" class="java.lang.String" itemvalue="Python.prova" />
         <item index="3" class="java.lang.String" itemvalue="Python.data_parser (1)" />
         <item index="4" class="java.lang.String" itemvalue="Python.data_parser" />
@@ -607,7 +604,7 @@
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3297414" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3297414" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3286638" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.3286638" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.24984066" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3297414" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
@@ -673,12 +670,13 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="551">
           <caret line="1192" column="13" selection-start-line="1192" selection-start-column="13" selection-end-line="1192" selection-end-column="13" />
+          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/FOG/data_parser.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3612">
+        <state relative-caret-position="3801">
           <caret line="181" column="39" selection-start-line="181" selection-start-column="39" selection-end-line="181" selection-end-column="39" />
           <folding>
             <element signature="e#140#158#0" expanded="true" />
@@ -686,28 +684,12 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/FOG/io_functions.py">
+    <entry file="file://$PROJECT_DIR$/FOG/models.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="856">
-          <caret line="218" column="0" selection-start-line="218" selection-start-column="0" selection-end-line="218" selection-end-column="0" />
+        <state relative-caret-position="-378">
+          <caret line="3" column="30" selection-start-line="3" selection-start-column="30" selection-end-line="3" selection-end-column="30" />
           <folding>
-            <element signature="e#142#154#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/FOG/main.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="168">
-          <caret line="41" column="16" selection-start-line="41" selection-start-column="16" selection-end-line="41" selection-end-column="16" />
-          <folding>
-            <element signature="e#125#143#0" expanded="true" />
-            <element signature="e#1421#1509#0" expanded="false" />
-            <element signature="e#1509#1529#0" expanded="false" />
-            <element signature="e#2704#2940#0" expanded="false" />
-            <element signature="e#4944#6167#0" expanded="false" />
-            <element signature="e#6195#6271#0" expanded="false" />
-            <element signature="e#8731#9535#0" expanded="false" />
+            <element signature="e#125#160#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -722,36 +704,50 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/FOG/preprocessing_tools.py">
+    <entry file="file://$PROJECT_DIR$/FOG/io_functions.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="6825">
-          <caret line="384" column="51" selection-start-line="384" selection-start-column="51" selection-end-line="384" selection-end-column="51" />
+        <state relative-caret-position="4573">
+          <caret line="218" column="0" selection-start-line="218" selection-start-column="0" selection-end-line="218" selection-end-column="0" />
           <folding>
-            <element signature="e#142#160#0" expanded="true" />
-            <element signature="e#5860#5998#0" expanded="false" />
-            <element signature="e#6029#6085#0" expanded="false" />
-            <element signature="e#8465#8614#0" expanded="false" />
-            <element signature="e#9453#9811#0" expanded="false" />
-            <element signature="e#9841#10388#0" expanded="false" />
-            <element signature="e#11051#11100#0" expanded="false" />
+            <element signature="e#142#154#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/FOG/Output.txt">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="567">
-          <caret line="20" column="193" selection-start-line="20" selection-start-column="193" selection-end-line="20" selection-end-column="193" />
+        <state relative-caret-position="453">
+          <caret line="22" column="0" selection-start-line="22" selection-start-column="0" selection-end-line="22" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/FOG/models.py">
+    <entry file="file://$PROJECT_DIR$/FOG/preprocessing_tools.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="441">
-          <caret line="33" column="54" selection-start-line="33" selection-start-column="54" selection-end-line="33" selection-end-column="54" />
+        <state relative-caret-position="362">
+          <caret line="132" column="33" selection-start-line="132" selection-start-column="33" selection-end-line="132" selection-end-column="33" />
+          <folding>
+            <element signature="e#142#160#0" expanded="true" />
+            <element signature="e#5334#5472#0" expanded="false" />
+            <element signature="e#5503#5559#0" expanded="false" />
+            <element signature="e#6725#6908#0" expanded="false" />
+            <element signature="e#6935#7084#0" expanded="false" />
+            <element signature="e#7147#7884#0" expanded="false" />
+            <element signature="e#7923#8281#0" expanded="false" />
+            <element signature="e#8311#8858#0" expanded="false" />
+            <element signature="e#9521#9570#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/FOG/main.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1391">
+          <caret line="27" column="19" selection-start-line="27" selection-start-column="19" selection-end-line="27" selection-end-column="19" />
           <folding>
             <element signature="e#125#143#0" expanded="true" />
+            <element signature="e#933#1169#0" expanded="false" />
+            <element signature="e#4914#5718#0" expanded="false" />
           </folding>
         </state>
       </provider>

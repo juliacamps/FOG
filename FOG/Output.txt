@@ -19,3 +19,19 @@ C(32, 159)-P-DR(0.5)-C(32, 71)-P-DR(0.5)-C(64, 51)-P-DR(0.5)-C(64, 31)-P-DR(0.5)
 
 Configuration:
 C(32, 159)-P-DR(0.5)-C(32, 71)-P-DR(0.5)-C(64, 51)-P-DR(0.5)-C(64, 31)-P-DR(0.5)-DN(128)-D(0.5)-DN(128)-D(0.5)-DN(1, Sigmoid)|adadelta=>Epochs: 2;Time: 1144.179626;Final Status: OK;Acc: 0.624681122449
+
+
+Configuration:
+C(32, 7)-DR(0.25)-C(64, 5)-DR(0.25)-DN(128)-D(0.25)-DN(128)-D(0.25)-DN(1, Sigmoid)|INIT:glorot_uniform|adadelta=>Epochs: 3;Time: 2380.335123;Final Status: OK;Acc: 0.568769290123
+
+Configuration:
+C(32, 7)-P-DR(0.5)-C(64, 5)-P-DR(0.5)-DN(128)-D(0.5)-DN(128)-D(0.5)-DN(1, Sigmoid)|INIT:he_normal|adam=>Epochs: 3;Time: 2390.4414829999996;Final Status: OK;Acc: 0.660783179012
+
+Configuration:
+C(32, 7)-DR(0.25)-C(64, 5)-DR(0.25)-DN(128)-D(0.25)-DN(128)-D(0.25)-DN(1, Sigmoid)|INIT:he_uniform|rmsprop=>Epochs: 5;Time: 3732.9025039999997;Final Status: OK;Acc: 0.501350308642
+
+Configuration:
+C(32, 7)-P-DR(0.5)-C(64, 5)-P-DR(0.5)-C(64, 3)-P-DR(0.5)-DN(128)-D(0.5)-DN(128)-D(0.5)-DN(1, Sigmoid)|INIT:lecun_uniform|adadelta=>Epochs: 3;Time: 2408.313540000001;Final Status: OK;Acc: 0.532889660494
+
+Configuration:
+C(32, 7)-DR(0.25)-C(64, 5)-DR(0.25)-C(64, 3)-DR(0.25)-DN(128)-D(0.25)-DN(128)-D(0.25)-DN(256)-D(0.25)-DN(1, Sigmoid)|INIT:uniform|adam=>Epochs: 2;Time: 1628.469188000001;Final Status: OK;Acc: 0.519290123457

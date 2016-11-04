@@ -7,16 +7,6 @@ import numpy as np
 import random as rd
 import time
 
-from keras.models import Sequential
-from keras.layers import Dense
-from keras.layers import Dropout
-from keras.layers import Flatten
-from keras.callbacks import Callback
-from keras.layers.convolutional import Convolution2D
-from keras.layers.convolutional import Convolution1D
-from keras.layers.convolutional import MaxPooling2D
-from keras.layers.convolutional import MaxPooling1D
-
 from FOG.preprocessing_tools import generate_arrays_from_file
 from FOG.io_functions import get_patient_data_files
 from FOG.io_functions import save_model
@@ -31,7 +21,6 @@ _N_CLASS = 2
 _N_EPOCH = 50
 _N_FOLD = 1
 _T_WINDOW = 1
-# _WINDOW_OVERLAP = 0.5
 _SEQ_FREQ = 40
 _DETECTION_PROBLEM = 'walk'
 _PREPROCESS_FINISHED = True
@@ -40,59 +29,16 @@ _LOAD_MODEL = False
 _TRAIN_MODEL = True
 _TEST_MODEL = False
 _BATCH_SIZE = 64
-if _DETECTION_PROBLEM == 'fog':
-    _N_TRAIN_SAMPLE = 338944
-    _N_VAL_SAMPLE = 3136
-    _N_TEST_SAMPLE = 5888
-elif _DETECTION_PROBLEM == 'walk':
-    _N_TRAIN_SAMPLE = 338944
-    _N_VAL_SAMPLE = 3136
-    _N_TEST_SAMPLE = 5888
+_N_TRAIN_SAMPLE = 1003520
+_N_VAL_SAMPLE = 10368
+_N_TEST_SAMPLE = 19392
 
 _EARLY_STOPPING_TH = 0.01
 _MAX_Q_SIZE = 5
-
-
-class PrintBatch(Callback):
-    """"""
-    def on_batch_end(self, epoch, logs={}):
-        """"""
-        print(logs)
-
-
-# def build_model():
-#     """Build the model"""
-#     model_ = Sequential()
-#     window_size = _SEQ_FREQ * _T_WINDOW
-#     model_.add(Convolution2D(64, 9, 9, border_mode='same',
-#                              input_shape=(window_size,
-#                                           _SEQ_FEATURE, _SEQ_CHANNEL),
-#                              activation='relu'))
-#     # model_.add(MaxPooling2D(pool_size=(2, 1)))
-#     model_.add(Dropout(0.5))
-#
-#     model_.add(Convolution2D(64, 5, 1, activation='relu'))
-#     # model_.add(MaxPooling2D(pool_size=(2, 1)))
-#     model_.add(Dropout(0.5))
-#
-#     model_.add(Convolution2D(64, 3, 1, activation='relu'))
-#     # model_.add(MaxPooling2D(pool_size=(2, 1)))
-#     model_.add(Dropout(0.5))
-#
-#     # model_.add(Convolution2D(64, 3, 1, activation='relu'))
-#     # # model_.add(MaxPooling2D(pool_size=(2, 1)))
-#     # model_.add(Dropout(0.5))
-#
-#     model_.add(Flatten())
-#     model_.add(Dense(128, activation='relu'))
-#     model_.add(Dropout(0.5))
-#
-#     # model_.add(Dense(128, activation='relu'))
-#     # model_.add(Dropout(0.5))
-#
-#     model_.add(Dense(1, activation='sigmoid'))
-#
-#     return model_
+_REPRODUCIBILITY = True
+_SEED = 277
+_N_SHIFT = 3
+_N_ROTATE = 6
 
 
 def load_trained_model(name='model'):
@@ -111,8 +57,8 @@ def load_trained_model(name='model'):
 
 
 def train_model(model_, patient_list, type_name=_DETECTION_PROBLEM,
-                cross_val=False, n_fold=_N_FOLD, n_epoch=_N_EPOCH,
-                val_frac=0.1, stopping_th=_EARLY_STOPPING_TH):
+                n_epoch=_N_EPOCH, val_frac=0.1,
+                stopping_th=_EARLY_STOPPING_TH):
     """Train model on the selected patients
     
     Parameters
@@ -120,11 +66,6 @@ def train_model(model_, patient_list, type_name=_DETECTION_PROBLEM,
     model_ : keras.Sequential()
     patient_list : str array-like
         Names of the patients data to be used for training.
-    cross_val : bool, optional, default: True
-        Indicate if cross-validation strategy is to be used.
-    n_fold : int, optional, default: _N_FOLD
-        Number of folds, and of times to train the model over all
-        the training data set.
     n_epoch : int, optional, default: _N_EPOCH
         Number of epochs to train the model.
     val_frac : float, optional, default: 0.1
@@ -141,78 +82,25 @@ def train_model(model_, patient_list, type_name=_DETECTION_PROBLEM,
         
     """
     
-    if cross_val:
-        [trained_model, result] = cross_validate(model_, n_fold)
-    else:
-        [train_patient, validation_patient] = split_data(
-            patient_list, test=val_frac, random_=True,
-            validation=True)
-        train_file = [file for patient in train_patient for file in
-                      get_patient_data_files(patient,
-                                             type_name=type_name)]
-        validation_file = [file for patient in validation_patient for
-                           file in get_patient_data_files(
-                               patient, type_name=type_name)]
+    [train_patient, validation_patient] = split_data(
+        patient_list, test=val_frac, random_=True,
+        validation=True)
+    train_file = [file for patient in train_patient for file in
+                  get_patient_data_files(patient,
+                                         type_name=type_name)]
+    validation_file = [file for patient in validation_patient for
+                       file in get_patient_data_files(
+                           patient, type_name=type_name)]
 
-        [trained_model, result] = single_train(
-            model_, train_file, validation_file, n_epoch=n_epoch,
-            stopping_th=stopping_th)
+    [trained_model, result] = single_train(
+        model_, train_file, validation_file, n_epoch=n_epoch,
+        stopping_th=stopping_th)
     
     return [trained_model, result]
 
 
-def cross_validate(model_, n_fold=_N_FOLD, n_epoch=_N_EPOCH):
-    """Perform cross-validation training strategy
-    
-    Parameters
-    ----------
-    model_ : keras.Sequential
-    n_fold : int, optional, default: _N_FOLD
-        Number of folds, and of times to train the model over all
-        the training data set.
-    n_epoch : int, optional, default: _N_EPOCH
-        Number of epochs to train the model.
-        
-    Return
-    ------
-    model_ : keras.Sequential
-        Model trained with the specified data and configuration.
-    result : dict
-        Contains the resulting performance obtained during the
-        training process.
-        
-    """
-
-    fold = gen_k_folds(train_patient)
-    best_acc = 0
-    best_model = None
-    best_result = None
-    result_cum = 0
-    result = {}
-    for i in range(n_fold):
-        train_fold = (fold[:]).remove(i)
-        test_fold = fold[i]
-        [trained_model, result] = single_train(model_, train_fold,
-                                               test_fold)
-        if result['acc'] > best_acc:
-            best_acc = result['acc']
-            best_result = result
-            best_model = trained_model
-            
-        result_cum += result['acc'] / n_fold
-    result['val_acc'] = result_cum
-    return [best_model, result]
-
-
-def aux_generator():
-    """"""
-    while 1:
-        yield (np.zeros((50,100,9,1)), np.zeros((50,1)))
-
-
 def single_train(model_, train_file, validation_file,
                  n_epoch=_N_EPOCH, time_window=_T_WINDOW,
-                 # window_overlaping=_WINDOW_OVERLAP,
                  data_freq=_SEQ_FREQ, stopping_th=_EARLY_STOPPING_TH):
     """Train the model
     
@@ -220,15 +108,13 @@ def single_train(model_, train_file, validation_file,
     """
 
     window_size = int(time_window * data_freq)
-    # window_spacing = int(round(window_size * (1 - window_overlaping)))
     
     train_generator = generate_arrays_from_file(
-        model_, train_file, window_size, #window_spacing,
-        batch_size=_BATCH_SIZE, augment_count=[3, 7],
-        augement_data_type='all')
+        model_, train_file, window_size, batch_size=_BATCH_SIZE,
+        augment_count=[_N_SHIFT, _N_ROTATE], augement_data_type='all')
 
     validation_generator = generate_arrays_from_file(
-                model_, validation_file, window_size, #window_spacing,
+                model_, validation_file, window_size,
                 batch_size=_BATCH_SIZE)
     prev_acc = 0
     result_ = None
@@ -237,7 +123,6 @@ def single_train(model_, train_file, validation_file,
     epochs = 0
     status = 'OK'
 
-    print('Entra')
     for i in range(n_epoch):
         result_ = [0, 0]
         try:
@@ -275,7 +160,6 @@ def single_train(model_, train_file, validation_file,
 
 
 def test_model(model_, test_patient, time_window=_T_WINDOW,
-                 # window_overlaping=_WINDOW_OVERLAP,
                  data_freq=_SEQ_FREQ, type_name=_DETECTION_PROBLEM):
     """Test the model
 
@@ -304,7 +188,6 @@ if __name__ == '__main__':
     
     from FOG.preprocessing_tools import full_preprocessing
     from FOG.preprocessing_tools import generate_dataset
-    from FOG.preprocessing_tools import gen_k_folds
     
     # Get data
     [test_patient, train_patient] = generate_dataset()
@@ -314,8 +197,9 @@ if __name__ == '__main__':
                            type_name=_DETECTION_PROBLEM)
 
     # Initialize
-    # seed = 170
-    # seed = np.random.seed(seed)
+    if _REPRODUCIBILITY:
+        np.random.seed(_SEED)
+        rd.seed(_SEED)
     
     # Build model
     if _LOAD_MODEL:
@@ -326,8 +210,8 @@ if __name__ == '__main__':
             model = build_model(window_size)
             n_conv = [3, 3, 3, 4, 4, 4, 5, 5, 5]
             n_dense = [2, 2, 2, 2, 3, 3, 3, 3, 3]
-            k_shapes = [[32, 15, 9], [32, 7, 1], [64, 5, 1], [64, 3, 1],
-                        [128, 3, 1]]
+            k_shapes = [[32, 11], [32, 7], [64, 5], [64, 3],
+                        [128, 3]]
             dense_shape = [128, 128, 256]
             pooling = [False, True, False, True, False, True, True,
                        True, True]
@@ -335,14 +219,16 @@ if __name__ == '__main__':
                        0.5]
             opt_name = ['adadelta', 'adam', 'rmsprop', 'adadelta', 'adam',
                         'rmsprop', 'adadelta', 'adam', 'rmsprop']
-            for i in range(3, len(n_conv)):
+            init = ['glorot_uniform', 'he_normal', 'he_uniform',
+                    'lecun_uniform', 'uniform', 'glorot_uniform',
+                    'he_normal', 'he_uniform', 'glorot_normal']
+            for i in range(len(n_conv)):
                 [conf_name, model] = build_model(
                     window_size, n_feature=_SEQ_FEATURE,
-                    n_chan=_SEQ_CHANNEL, n_conv=n_conv[i],
-                    n_dense=n_dense[i], k_shapes=k_shapes,
-                    dense_shape=dense_shape,
+                    n_conv=n_conv[i], n_dense=n_dense[i],
+                    k_shapes=k_shapes, dense_shape=dense_shape,
                     opt_name=opt_name[i], pooling=pooling[i],
-                    dropout=dropout[i])
+                    dropout=dropout[i], init=init[i])
                 [model, result] = train_model(
                     model, train_patient,
                     type_name=_DETECTION_PROBLEM,
@@ -357,18 +243,6 @@ if __name__ == '__main__':
     
                 save_model(model, 'model_' + str(i+j))
 
-        
-        
-    #     # Train
-    #     if _TRAIN_MODEL:
-    #         train_it = 0
-    #         [model, result] = train_model(model, train_patient,
-    #                                       type_name=_DETECTION_PROBLEM,
-    #                                       stopping_th=_EARLY_STOPPING_TH)
-    #         # Save model
-    #         # save_model(model, 'model_' + _DETECTION_PROBLEM + train_it)
-    #         print('VALIDATION ACC: ' + str(result[1]))
-    #
     # if _TEST_MODEL:
     #     result = test_model(model, test_patient,
     #                         time_window=_T_WINDOW,

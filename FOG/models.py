@@ -3,68 +3,68 @@
 # Authors: Julia Camps <julia.camps.sereix@est.fib.upc.edu>
 # Created on: 06/10/2016 17:22
 
-import numpy as np
-import random as rd
-
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers import Dropout
 from keras.layers import Flatten
-from keras.callbacks import Callback
-# from keras.layers.convolutional import Convolution2D
 from keras.layers.convolutional import AtrousConvolution1D
 from keras.layers.convolutional import Convolution1D
 from keras.layers.convolutional import MaxPooling1D
-# from keras.layers.convolutional import MaxPooling2D
-from keras.layers.core import SpatialDropout2D
 
 
-def build_model(window_size, n_feature=9, n_chan=1, n_conv=1,
-                n_dense=1, k_shapes=[[64, 3]], dense_shape=[128],
-                opt_name='adadelta', pooling=False, dropout=0.5):
+def build_model(window_size, n_feature=9, n_conv=1, n_dense=1,
+                k_shapes=[[64, 3]], dense_shape=[128],
+                init='uniform', opt_name='adadelta',
+                pooling=False, dropout=0.5):
     """Build the model"""
     model_ = Sequential()
     name = ''
-    for i in range(n_conv):
-        n_kernel = k_shapes[i][0]
-        h_kernel = k_shapes[i][1]
-        # w_kernel = k_shapes[i][2]
+    if n_conv > 0:
+        n_kernel = k_shapes[0][0]
+        h_kernel = k_shapes[0][1]
         model_.add(AtrousConvolution1D(n_kernel, h_kernel,
                                        atrous_rate=2,
-                                       init='uniform',
+                                       init=init,
                                        border_mode='same',
                                        input_shape=(window_size,
                                                     n_feature),
                                        activation='relu'))
+    for i in range(1, n_conv):
+        n_kernel = k_shapes[i][0]
+        h_kernel = k_shapes[i][1]
+        model_.add(Convolution1D(n_kernel, h_kernel, init=init,
+                                 border_mode='same',
+                                 activation='relu'))
+        
         # model_.add(Convolution2D(n_kernel, h_kernel, w_kernel,
         #                          border_mode='same',
         #                          input_shape=(window_size,
         #                                       n_feature, n_chan),
         #                          activation='relu'))
-        name = (name + 'C(' + str(n_kernel) + ', '
-                + str(h_kernel) + str(w_kernel)) + ')-'
+        name += 'C(' + str(n_kernel) + ', ' + str(h_kernel) + ')-'
         if pooling:
-            model_.add(MaxPooling2D(pool_size=(2, 1)))
-            name = name + 'P-'
+            model_.add(MaxPooling1D(pool_length=2))
+            name += 'P-'
         if dropout > 0:
-            model_.add(SpatialDropout2D(dropout))
-            name = name + 'DR(' + str(dropout) + ')-'
+            model_.add(Dropout(dropout))
+            name += 'DR(' + str(dropout) + ')-'
     model_.add(Flatten())
     for i in range(n_dense):
-        model_.add(Dense(dense_shape[i], activation='relu'))
-        name = name + 'DN(' + str(dense_shape[i]) + ')-'
+        model_.add(Dense(dense_shape[i], activation='relu',
+                         init=init))
+        name += 'DN(' + str(dense_shape[i]) + ')-'
         
         if dropout > 0:
             model_.add(Dropout(dropout))
-            name = name + 'D(' + str(dropout) + ')-'
+            name += 'D(' + str(dropout) + ')-'
 
     model_.add(Dense(1, activation='sigmoid'))
-    name = name + 'DN(1, Sigmoid)|'
+    name += 'DN(1, Sigmoid)|INIT:' + init + '|'
     
     model_.compile(loss='binary_crossentropy',
                    optimizer=opt_name,
                    metrics=['accuracy'])
-    name = name + opt_name
+    name += opt_name
         
     return [name, model_]
 
