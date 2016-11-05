@@ -287,6 +287,7 @@ class AuxModel():
 
 
 if __name__ == '__main__':
+    problem = 'walk'
     reproducibility = True
     seed = 77
     if reproducibility:
@@ -295,20 +296,19 @@ if __name__ == '__main__':
     patient_list = _PATIENT_LIST
     train_data = [patient for patient in patient_list
                   if (patient not in _VAL_PATIENT_DEFAULT
-                      and patient not in _TEST_PATIENT_DEFAULT and
-                      is_correct(patient))]
+                      and patient not in _TEST_PATIENT_DEFAULT)]
     val_data = _VAL_PATIENT_DEFAULT
     test_data = _TEST_PATIENT_DEFAULT
     model = AuxModel()
     train_file = [file for patient in train_data for file in
                   get_patient_data_files(patient,
-                                         type_name='walk')]
+                                         type_name=problem)]
     val_file = [file for patient in val_data for file in
                   get_patient_data_files(patient,
-                                         type_name='walk')]
+                                         type_name=problem)]
     test_file = [file for patient in test_data for file in
                 get_patient_data_files(patient,
-                                       type_name='walk')]
+                                       type_name=problem)]
     batch_sizes = [32]
     time_windows = [3]
     filter_thresholds = [0.1, 0.2]

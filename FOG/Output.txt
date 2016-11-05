@@ -99,14 +99,29 @@ Number of training samples: 549248
 Number of model parameters: 84353
 Model-ID: 0
 
+
+
 Configuration:
-C(32, 3)-DR(0.25)-DN(64)-D(0.25)-DN(1, Sigmoid)|INIT:lecun_uniform|OPT: rmsprop
-Epochs: 0
-Time: 0.44055100000014136
-Final Status: ERROR:Exception('Error when checking model input: expected convolution1d_input_2 to have shape (None, 80, 9) but got array with shape (128, 40, 9)',)
-Validation acc: 0
-Percentage of positive train samples: 0.589611614426
-Percentage of positive val samples: 0.560805722892
-Number of training samples: 549248
+C(16, 5)-DR(0.25)-C(32, 3)-DR(0.25)-DN(64)-D(0.25)-DN(1, Sigmoid)|INIT:lecun_uniform|OPT: rmsprop
+Epochs: 4
+Time: 976.9435389999999
+Final Status: OK
+Validation acc: 0.633659638554
+Percentage of positive train samples: 0.6
+Percentage of positive val samples: 0.58
+Number of training samples: 0.6
 Number of model parameters: 166273
-Model-ID: 1
+Model-ID: 0
+
+Date:2016-11-05
+Configuration:
+C(16, 5)-DR(0.25)-C(32, 3)-DR(0.25)-DN(64)-D(0.25)-DN(1, Sigmoid)|INIT:lecun_uniform|OPT: rmsprop
+Epochs: 5
+Time: 1246.058862
+Final Status: OK
+Validation acc: 0.671103395062
+Percentage of positive train samples: 0.6
+Percentage of positive val samples: 0.57
+Number of training samples: 0.6
+Number of model parameters: 166273
+Model-ID: 0

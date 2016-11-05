@@ -166,7 +166,7 @@ _REPRODUCIBILITY = True
 _SEED = 77
 _N_SHIFT = 2
 _N_ROTATE = 4
-_MIN_EPOCH = 3
+_MIN_EPOCH = 4
 
 
 def load_trained_model(name='model'):
@@ -307,6 +307,8 @@ def single_train(
 
 if __name__ == '__main__':
     
+    import datetime
+    
     from FOG.preprocessing_tools import full_preprocessing
     from FOG.preprocessing_tools import generate_dataset
     
@@ -377,9 +379,12 @@ if __name__ == '__main__':
                                     n_train_sample=n_train,
                                     n_val_sample=n_val,
                                     filter_threshold=filter_th,
-                                    batch_size=batch_size)
-                                with open("Output.txt", "a") as out_f:
-                                    print("\nConfiguration:\n"
+                                    batch_size=batch_size,
+                                    window_size=window_size)
+                                with open('Output.txt', 'a') as out_f:
+                                    print('\nDate:'
+                                          + str(datetime.date.today())
+                                          + '\nConfiguration:\n'
                                           + conf_name + '\nEpochs: '
                                           + str(result[1])
                                           + '\nTime: '
