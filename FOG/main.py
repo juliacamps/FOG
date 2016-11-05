@@ -368,7 +368,7 @@ if __name__ == '__main__':
                                 print('STARTING TRAINING OF '
                                       'MODEL:\n' + conf_name +
                                       '\nN-Parameters='
-                                      + str(model.count_params))
+                                      + str(model.count_params()))
                                 [model, result] = train_model(
                                     model, train_patient,
                                     validation_patient=val_patient,
