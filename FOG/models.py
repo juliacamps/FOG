@@ -13,35 +13,41 @@ from keras.layers.convolutional import MaxPooling1D
 
 
 def build_model(window_size, n_feature=9, n_conv=1, n_dense=1,
-                k_shapes=[[64, 3]], dense_shape=[128],
+                k_shapes=[[32, 3]], dense_shape=[128],
                 init='uniform', opt_name='adadelta',
                 pooling=False, dropout=0.5):
     """Build the model"""
     model_ = Sequential()
     name = ''
     if n_conv > 0:
-        n_kernel = k_shapes[0][0]
-        h_kernel = k_shapes[0][1]
-        model_.add(AtrousConvolution1D(n_kernel, h_kernel,
-                                       atrous_rate=2,
-                                       init=init,
-                                       border_mode='same',
-                                       input_shape=(window_size,
-                                                    n_feature),
-                                       activation='relu'))
+        nb_kernel = k_shapes[0][0]
+        he_kernel = k_shapes[0][1]
+        model_.add(Convolution1D(nb_kernel, he_kernel,
+                                 init=init,
+                                 border_mode='same',
+                                 input_shape=(window_size, n_feature),
+                                 activation='relu'))
+        # model_.add(AtrousConvolution1D(n_kernel, h_kernel,
+        #                                atrous_rate=2,
+        #                                init=init,
+        #                                border_mode='same',
+        #                                input_shape=(window_size,
+        #                                             n_feature),
+        #                                activation='relu'))
+        name += 'C(' + str(nb_kernel) + ', ' + str(he_kernel) + ')-'
+        if pooling:
+            model_.add(MaxPooling1D(pool_length=2))
+            name += 'P-'
+        if dropout > 0:
+            model_.add(Dropout(dropout))
+            name += 'DR(' + str(dropout) + ')-'
     for i in range(1, n_conv):
-        n_kernel = k_shapes[i][0]
-        h_kernel = k_shapes[i][1]
-        model_.add(Convolution1D(n_kernel, h_kernel, init=init,
+        nb_kernel = k_shapes[i][0]
+        he_kernel = k_shapes[i][1]
+        model_.add(Convolution1D(nb_kernel, he_kernel, init=init,
                                  border_mode='same',
                                  activation='relu'))
-        
-        # model_.add(Convolution2D(n_kernel, h_kernel, w_kernel,
-        #                          border_mode='same',
-        #                          input_shape=(window_size,
-        #                                       n_feature, n_chan),
-        #                          activation='relu'))
-        name += 'C(' + str(n_kernel) + ', ' + str(h_kernel) + ')-'
+        name += 'C(' + str(nb_kernel) + ', ' + str(he_kernel) + ')-'
         if pooling:
             model_.add(MaxPooling1D(pool_length=2))
             name += 'P-'
@@ -64,8 +70,8 @@ def build_model(window_size, n_feature=9, n_conv=1, n_dense=1,
     model_.compile(loss='binary_crossentropy',
                    optimizer=opt_name,
                    metrics=['accuracy'])
-    name += opt_name
-        
+    name += 'OPT: ' + opt_name
+    
     return [name, model_]
 
 

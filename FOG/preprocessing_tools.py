@@ -18,19 +18,16 @@ from FOG.io_functions import get_std_mean
 [_DATA_STD, _DATA_MEAN] = get_std_mean()
 [_PATIENT_LIST, _VAL_PATIENT_DEFAULT, _TEST_PATIENT_DEFAULT] = \
     get_patient_names()
-_DATA_AUGMENTATION = ['shift', 'noise']
 _SHIFT_RANGE = [0, 1]
 _ROT_RANGE = np.array((-20, 20)) * np.pi / 180
-_REPRODUCIBILITY = True
-_SEED = 277
-_N_FEATURES = 9
 
 
 def generate_arrays_from_file(model_, path_list, window_size,
                               batch_size=32,
                               preprocess=False, temporal=False,
                               augment_count=[0],
-                              augement_data_type='shift'):
+                              augement_data_type='all',
+                              filter_threshold=0.0):
     """Create data set generator"""
         
     shift_count = 1
@@ -49,12 +46,15 @@ def generate_arrays_from_file(model_, path_list, window_size,
         batch_count = 0
         y_cum = 0
         aux_count = 0
+        batch_X = []
+        batch_Y = []
+        batch_it = 0
+        discarded = 0
         for path in path_list:
             # Data Augmentation
             shift_indexes = [0]
             rotate = [None]
             if augment_data:
-                
                 if (augement_data_type == 'all'
                         or augement_data_type == 'shift'):
                     shift_rates = [0.0]
@@ -75,20 +75,19 @@ def generate_arrays_from_file(model_, path_list, window_size,
                 shift = shift_indexes[it_shift]
                 for it_rot in range(rotate_count):
                     rotate_mat = rotate[it_rot]
-            
-                    batch_X = []
-                    batch_Y = []
-                    batch_it = 0
-                    
+                    if temporal:
+                        batch_X = []
+                        batch_Y = []
+                        batch_it = 0
                     for X in pd.read_csv(
                             path, delim_whitespace=True,
                             dtype=float, chunksize=window_size,
                             na_filter=False, skiprows=shift):
-    
                         X = X.as_matrix()
-                        y = np.max(X[:, -1])
+                        y = check_label(X[:, -1], filter_threshold)
+                        if y == -1 and np.max(X[:, -1]) != -1:
+                            discarded += 1
                         aux_count += X.shape[0]
-
                         if y >= 0 and window_size == X.shape[0]:
                             X = X[:, :-1]
                             if rotate_mat is not None:
@@ -109,7 +108,7 @@ def generate_arrays_from_file(model_, path_list, window_size,
                                 batch_X = []
                                 batch_Y = []
                                 batch_it = 0
-                        else:
+                        elif temporal:
                             batch_it = 0
                             batch_X = []
                             batch_Y = []
@@ -126,6 +125,7 @@ def generate_arrays_from_file(model_, path_list, window_size,
         # print(y_cum / n_samples)
         # print('Percentage of lost samples:')
         # print(1 - (n_samples * window_size) / aux_count)
+        # print('Discarded for filtering: ' + str(discarded))
         # break
 
 
@@ -138,21 +138,15 @@ def load_instance(line, preprocess=False):
     return [x, y]
 
 
-def process_line(line):
-    """Process line"""
-    
-    return [line[:-1], line[-1]]
-
-
-def split_data(patient_list, test=0.15, random_=False,
-               validation=False):
-    """Split batches between train and test/validation
+def split_data(patient_list, part=[0.7, 0.15, 0.15], random_=False):
+    """Split batches between train, validation and test
     
     Parameter
     ---------
     path_list : str array-like
-    test : float, optional, default: 0.15
-        Percent of the overall data set corresponding to test data.
+    part : float array-like, optional, default: [0.7, 0.15, 0.15]
+        Percent of the overall data set corresponding to train,
+        validation and test partitions, respectively.
     random_ : bool
         Indicates if the test patients should be random, due to
         reproducibility.
@@ -164,21 +158,22 @@ def split_data(patient_list, test=0.15, random_=False,
     """
 
     if random_:
-        n_test = int(np.round(len(patient_list) * test))
-        if n_test == 0 and test > 0:
+        n_val = int(np.round(len(patient_list) * part[1]))
+        n_test = int(np.round(len(patient_list) * part[2]))
+        if n_val == 0 and part[1] > 0:
+            n_val = 1
+        if n_test == 0 and part[2] > 0:
             n_test = 1
         rd.shuffle(patient_list)
         test_patient = patient_list[:n_test]
-        train_patient = patient_list[n_test:]
-    elif validation:
-        test_patient = _VAL_PATIENT_DEFAULT
-        train_patient = [x for x in patient_list if x not
-                         in test_patient]
+        val_patient = patient_list[n_test:(n_val + n_test)]
+        train_patient = patient_list[(n_val + n_test):]
     else:
+        val_patient = _VAL_PATIENT_DEFAULT
         test_patient = _TEST_PATIENT_DEFAULT
         train_patient = [x for x in patient_list if x not
-                         in test_patient]
-    return [test_patient, train_patient]
+                         in test_patient and x not in val_patient]
+    return [train_patient, val_patient, test_patient]
 
 
 def check_data(X):
@@ -187,21 +182,19 @@ def check_data(X):
     Parameters
     ----------
     X : array-like, shape=[n_sample, n_features]
-    
     """
-    
     X -= _DATA_MEAN
     X /= _DATA_STD
     return X
 
 
-def check_label(Y):
+def check_label(Y, filter_threshold=0.0):
     """Check correctness of labels"""
     
-    y_label = -1
-    for y in Y:
-        if y >= 0:
-            y_label = max((y_label, y))
+    y_label = np.max(Y)
+    if y_label >= 0:
+        if (sum(Y == y_label) / Y.shape[0]) < filter_threshold:
+            y_label = -1
     return y_label
 
 
@@ -216,7 +209,6 @@ def full_preprocessing(train_patient, type_name='all'):
         Indicate the objective data to be searched, problem wisely.
         
     """
-    
     for patient in train_patient:
         train_file = get_patient_data_files(patient,
                                             type_name=type_name)
@@ -225,8 +217,7 @@ def full_preprocessing(train_patient, type_name='all'):
             X = check_data(X)
             save_matrix_data(
                 np.concatenate((X, np.reshape(y, (y.shape[0], 1))),
-                               axis=1), file
-            )
+                               axis=1), file)
 
 
 def generate_dataset(test=0.2):
@@ -244,7 +235,7 @@ def generate_dataset(test=0.2):
     """
     
     patient_list = get_all_patient()
-    return split_data(patient_list, test=test)
+    return split_data(patient_list, random_=False)
     
 
 def std_mean(seq):
@@ -261,7 +252,6 @@ def std_mean(seq):
     mean_cum : float
         Mean.
     """
-
     it_n = 1
     mean_cum = 0
     std_cum = 0
@@ -295,16 +285,14 @@ class AuxModel():
     def reset_states(self):
         """"""
 
+
 if __name__ == '__main__':
-    
     reproducibility = True
-    seed = 277
+    seed = 77
     if reproducibility:
         np.random.seed(seed)
         rd.seed(seed)
-    
     patient_list = _PATIENT_LIST
-    
     train_data = [patient for patient in patient_list
                   if (patient not in _VAL_PATIENT_DEFAULT
                       and patient not in _TEST_PATIENT_DEFAULT and
@@ -321,27 +309,33 @@ if __name__ == '__main__':
     test_file = [file for patient in test_data for file in
                 get_patient_data_files(patient,
                                        type_name='walk')]
-
-    batch_size = 64
+    batch_sizes = [32]
+    time_windows = [3]
+    filter_thresholds = [0.1, 0.2]
     data_freq = 40
     n_shift = 2
     n_rotate = 4
-    time_window = 1
-    window_size = int(time_window * data_freq)
-
-    print('TRAIN')
-    generate_arrays_from_file(model, train_file, window_size,
-                              batch_size=batch_size,
-                              augment_count=[n_shift, n_rotate],
-                              augement_data_type='all')
-    
-    print('VALIDATION')
-    generate_arrays_from_file(model, val_file, window_size,
-                              batch_size=batch_size)
-    
-    print('TEST')
-    generate_arrays_from_file(model, test_file, window_size,
-                              batch_size=batch_size)
+    for batch_it in range(len(batch_sizes)):
+        batch_size = batch_sizes[batch_it]
+        time_window = time_windows[batch_it]
+        for filter_th in filter_thresholds:
+            print('\nBatch_s:' + str(batch_size) + ' window:' +
+                  str(time_window) + ' filter:' + str(filter_th))
+            window_size = int(time_window * data_freq)
+            print('TRAIN')
+            generate_arrays_from_file(model, train_file, window_size,
+                                      batch_size=batch_size,
+                                      augment_count=[n_shift, n_rotate],
+                                      augement_data_type='all',
+                                      filter_threshold=filter_th)
+            print('VALIDATION')
+            generate_arrays_from_file(model, val_file, window_size,
+                                      batch_size=batch_size,
+                                      filter_threshold=filter_th)
+            print('TEST')
+            generate_arrays_from_file(model, test_file, window_size,
+                                      batch_size=batch_size,
+                                      filter_threshold=filter_th)
     print('END')
 
 # EOF

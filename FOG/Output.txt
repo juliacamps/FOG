@@ -9,3 +9,104 @@ Percentage of positive train samples: 0.581491815476
 Percentage of positive val samples: 0.550636574074
 Number of training samples: 537600
  Number of model parameters: 171297
+
+Configuration:
+C(32, 5)-P-DR(0.5)-DN(128)-D(0.5)-DN(128)-D(0.5)-DN(1, Sigmoid)|INIT:lecun_uniform|adam
+Epochs: 2
+Time: 800.7129409999998
+Final Status: OK
+Validation acc: 0.536651234568
+Percentage of positive train samples: 0.581491815476
+Percentage of positive val samples: 0.550636574074
+Number of training samples: 537600
+ Number of model parameters: 105889
+
+Configuration:
+C(32, 5)-DR(0.25)-DN(128)-D(0.25)-DN(1, Sigmoid)|INIT:lecun_uniform|adadelta
+Epochs: 3
+Time: 1168.86116
+Final Status: OK
+Validation acc: 0.571566358025
+Percentage of positive train samples: 0.581491815476
+Percentage of positive val samples: 0.550636574074
+Number of training samples: 537600
+ Number of model parameters: 171297
+
+Configuration:
+C(32, 5)-P-DR(0.5)-DN(128)-D(0.5)-DN(128)-D(0.5)-DN(1, Sigmoid)|INIT:lecun_uniform|adam
+Epochs: 2
+Time: 839.2063100000003
+Final Status: OK
+Validation acc: 0.533275462963
+Percentage of positive train samples: 0.581491815476
+Percentage of positive val samples: 0.550636574074
+Number of training samples: 537600
+ Number of model parameters: 105889
+
+Configuration:
+C(32, 5)-DR(0.25)-C(64, 3)-DR(0.25)-DN(128)-D(0.25)-DN(128)-D(0.25)-DN(1, Sigmoid)|INIT:lecun_uniform|rmsprop
+Epochs: 4
+Time: 1668.2277680000002
+Final Status: OK
+Validation acc: 0.581597222222
+Percentage of positive train samples: 0.581491815476
+Percentage of positive val samples: 0.550636574074
+Number of training samples: 537600
+ Number of model parameters: 357857
+
+Configuration:
+C(32, 5)-P-DR(0.5)-C(64, 3)-P-DR(0.5)-DN(128)-D(0.5)-DN(128)-D(0.5)-DN(1, Sigmoid)|INIT:lecun_uniform|adadelta
+Epochs: 2
+Time: 846.6535339999996
+Final Status: OK
+Validation acc: 0.537422839506
+Percentage of positive train samples: 0.581491815476
+Percentage of positive val samples: 0.550636574074
+Number of training samples: 537600
+ Number of model parameters: 112097
+
+Configuration:
+C(32, 5)-DR(0.25)-C(64, 3)-DR(0.25)-DN(128)-D(0.25)-DN(128)-D(0.25)-DN(1, Sigmoid)|INIT:lecun_uniform|adam
+Epochs: 2
+Time: 813.0354710000001
+Final Status: OK
+Validation acc: 0.575038580247
+Percentage of positive train samples: 0.581491815476
+Percentage of positive val samples: 0.550636574074
+Number of training samples: 537600
+ Number of model parameters: 357857
+
+Configuration:
+C(32, 5)-P-DR(0.5)-C(64, 3)-P-DR(0.5)-C(64, 3)-P-DR(0.5)-DN(128)-D(0.5)-DN(128)-D(0.5)-DN(256)-D(0.5)-DN(1, Sigmoid)|INIT:lecun_uniform|rmsprop
+Epochs: 2
+Time: 860.7759500000002
+Final Status: OK
+Validation acc: 0.529224537037
+Percentage of positive train samples: 0.581491815476
+Percentage of positive val samples: 0.550636574074
+Number of training samples: 537600
+ Number of model parameters: 116641
+
+Configuration:
+C(32, 3)-DR(0.25)-DN(64)-D(0.25)-DN(1, Sigmoid)|INIT:lecun_uniform|OPT: rmsprop
+Epochs: 7
+Time: 2719.4239629999997
+Final Status: OK
+Validation acc: 0.621423192771
+Percentage of positive train samples: 0.589611614426
+Percentage of positive val samples: 0.560805722892
+Number of training samples: 549248
+Number of model parameters: 84353
+Model-ID: 0
+
+Configuration:
+C(32, 3)-DR(0.25)-DN(64)-D(0.25)-DN(1, Sigmoid)|INIT:lecun_uniform|OPT: rmsprop
+Epochs: 0
+Time: 0.44055100000014136
+Final Status: ERROR:Exception('Error when checking model input: expected convolution1d_input_2 to have shape (None, 80, 9) but got array with shape (128, 40, 9)',)
+Validation acc: 0
+Percentage of positive train samples: 0.589611614426
+Percentage of positive val samples: 0.560805722892
+Number of training samples: 549248
+Number of model parameters: 166273
+Model-ID: 1
