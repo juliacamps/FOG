@@ -101,8 +101,8 @@ def generate_arrays_from_file(model_, path_list, window_size,
                             batch_Y.append(y)
                             batch_it += 1
                             if batch_it == batch_size:
-                                yield (np.asarray(batch_X),
-                                       np.asarray(batch_Y))
+                                # yield (np.asarray(batch_X),
+                                #        np.asarray(batch_Y))
                                 y_cum += sum(np.asarray(batch_Y))
                                 batch_count += 1
                                 batch_X = []
@@ -115,18 +115,18 @@ def generate_arrays_from_file(model_, path_list, window_size,
                             # model_.reset_states()
             
             # model_.reset_states()
-        # n_samples = batch_count * batch_size
-        # print('Total number of samples in all data: ')
-        # print(aux_count)
-        # print('Num Batches: ' + str(batch_count))
-        # print('Available number of samples: ' + str(
-        #     n_samples))
-        # print('Percentage of FOG:')
-        # print(y_cum / n_samples)
-        # print('Percentage of lost samples:')
-        # print(1 - (n_samples * window_size) / aux_count)
-        # print('Discarded for filtering: ' + str(discarded))
-        # break
+        n_samples = batch_count * batch_size
+        print('Total number of samples in all data: ')
+        print(aux_count)
+        print('Num Batches: ' + str(batch_count))
+        print('Available number of samples: ' + str(
+            n_samples))
+        print('Percentage of FOG:')
+        print(y_cum / n_samples)
+        print('Percentage of lost samples:')
+        print(1 - (n_samples * window_size) / aux_count)
+        print('Discarded for filtering: ' + str(discarded))
+        break
 
 
 def load_instance(line, preprocess=False):
@@ -220,7 +220,7 @@ def full_preprocessing(train_patient, type_name='all'):
                                axis=1), file)
 
 
-def generate_dataset(test=0.2):
+def generate_dataset(part=[0.7, 0.15, 0.15]):
     """Generate dataset with partitions
     
     Parameters
@@ -235,7 +235,7 @@ def generate_dataset(test=0.2):
     """
     
     patient_list = get_all_patient()
-    return split_data(patient_list, random_=False)
+    return split_data(patient_list, part=part, random_=False)
     
 
 def std_mean(seq):
@@ -309,10 +309,10 @@ if __name__ == '__main__':
     test_file = [file for patient in test_data for file in
                 get_patient_data_files(patient,
                                        type_name=problem)]
-    batch_sizes = [32]
-    time_windows = [3]
-    filter_thresholds = [0.1, 0.2]
-    data_freq = 40
+    batch_sizes = [64]
+    time_windows = [2]
+    filter_thresholds = [0.6, 0.7]
+    data_freq = 100
     n_shift = 2
     n_rotate = 4
     for batch_it in range(len(batch_sizes)):

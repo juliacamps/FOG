@@ -19,7 +19,7 @@ _SEQ_FEATURE = 9
 _N_CLASS = 2
 _N_EPOCH = 50
 _N_FOLD = 1
-_SEQ_FREQ = 40
+_SEQ_FREQ = 100
 _DETECTION_PROBLEM = 'walk'
 _PREPROCESS_FINISHED = True
 _PRECALCULATE = False
@@ -27,146 +27,195 @@ _LOAD_MODEL = False
 _TRAIN_MODEL = True
 _TEST_MODEL = False
 _PREPROCESSING_CONF = {
-                       'Conf_small_raw': {'Conf': {'Time': 1,
-                                                   'Batch': 128,
-                                                   'Filter': 0.0},
-                                          'Result': {
-                                             'n_train': 549248,
-                                             'n_val': 10624,
-                                             'n_test': 19712,
-                                             'percent_train': 0.59,
-                                             'percent_val': 0.56,
-                                             'percent_test': 0.59}
-                                          },
-                       'Conf_small_low': {'Conf': {'Time': 1,
-                                                   'Batch': 128,
-                                                   'Filter': 0.1},
-                                          'Result': {
-                                              'n_train': 547584,
-                                              'n_val': 10624,
-                                              'n_test': 19584,
-                                              'percent_train': 0.59,
-                                              'percent_val': 0.56,
-                                              'percent_test': 0.58}
-                                          },
-                       'Conf_small_med': {'Conf': {'Time': 1,
-                                                   'Batch': 128,
-                                                   'Filter': 0.2},
-                                          'Result': {
-                                              'n_train': 545664,
-                                              'n_val': 10624,
-                                              'n_test': 19584,
-                                              'percent_train': 0.59,
-                                              'percent_val': 0.56,
-                                              'percent_test': 0.58}
-                                          },
-                       'Conf_small_high': {'Conf': {'Time': 1,
-                                                    'Batch': 128,
-                                                    'Filter': 0.3},
-                                           'Result': {
-                                              'n_train': 543488,
-                                              'n_val': 10496,
-                                              'n_test': 19456,
-                                              'percent_train': 0.59,
-                                              'percent_val': 0.56,
-                                              'percent_test': 0.58}
-                                           },
-                       'Conf_med_raw': {'Conf': {'Time': 2,
-                                                 'Batch': 64,
-                                                 'Filter': 0.0},
-                                        'Result': {
-                                              'n_train': 274560,
-                                              'n_val': 5312,
-                                              'n_test': 9856,
-                                              'percent_train': 0.61,
-                                              'percent_val': 0.58,
-                                              'percent_test': 0.60}
-                                        },
-                       'Conf_med_low': {'Conf': {'Time': 2,
-                                                 'Batch': 64,
-                                                 'Filter': 0.1},
-                                        'Result': {
-                                              'n_train': 272896,
-                                              'n_val': 5312,
-                                              'n_test': 9792,
-                                              'percent_train': 0.60,
-                                              'percent_val': 0.58,
-                                              'percent_test': 0.60}
-                                        },
-                       'Conf_med_med': {'Conf': {'Time': 2,
-                                                 'Batch': 64,
-                                                 'Filter': 0.2},
-                                        'Result': {
-                                              'n_train': 270976,
-                                              'n_val': 5248,
-                                              'n_test': 9728,
-                                              'percent_train': 0.60,
-                                              'percent_val': 0.58,
-                                              'percent_test': 0.60}
-                                        },
-                       'Conf_med_high': {'Conf': {'Time': 2,
-                                                  'Batch': 64,
-                                                  'Filter': 0.3},
-                                         'Result': {
-                                              'n_train': 268864,
-                                              'n_val': 5184,
-                                              'n_test': 9664,
-                                              'percent_train': 0.60,
-                                              'percent_val': 0.57,
-                                              'percent_test': 0.60}
-                                         },
-                       'Conf_high_raw': {'Conf': {'Time': 3,
-                                                  'Batch': 32,
-                                                  'Filter': 0.0},
-                                         'Result': {
-                                              'n_train': 182912,
-                                              'n_val': 3552,
-                                              'n_test': 6560,
-                                              'percent_train': 0.62,
-                                              'percent_val': 0.60,
-                                              'percent_test': 0.62}
-                                         },
-                       'Conf_high_low': {'Conf': {'Time': 3,
-                                                  'Batch': 32,
-                                                  'Filter': 0.1},
-                                         'Result': {
-                                              'n_train': 181408,
-                                              'n_val': 3520,
-                                              'n_test': 6496,
-                                              'percent_train': 0.62,
-                                              'percent_val': 0.59,
-                                              'percent_test': 0.62}
-                                         },
-                       'Conf_high_med': {'Conf': {'Time': 3,
-                                                  'Batch': 32,
-                                                  'Filter': 0.2},
-                                         'Result': {
-                                              'n_train': 179872,
-                                              'n_val': 3488,
-                                              'n_test': 6432,
-                                              'percent_train': 0.62,
-                                              'percent_val': 0.59,
-                                              'percent_test': 0.61}
-                                         },
-                       'Conf_high_high': {'Conf': {'Time': 3,
-                                                   'Batch': 32,
-                                                   'Filter': 0.3},
-                                          'Result': {
-                                              'n_train': 177568,
-                                              'n_val': 3456,
-                                              'n_test': 6368,
-                                              'percent_train': 0.61,
-                                              'percent_val': 0.59,
-                                              'percent_test': 0.61}
-                                          }
+                       # 'Conf_small_raw': {'Conf': {'Time': 1,
+                       #                             'Batch': 128,
+                       #                             'Filter': 0.0},
+                       #                    'Result': {
+                       #                       'n_train': 549248,
+                       #                       'n_val': 10624,
+                       #                       'n_test': 19712,
+                       #                       'percent_train': 0.59,
+                       #                       'percent_val': 0.56,
+                       #                       'percent_test': 0.59}
+                       #                    },
+                       # 'Conf_small_low': {'Conf': {'Time': 1,
+                       #                             'Batch': 128,
+                       #                             'Filter': 0.1},
+                       #                    'Result': {
+                       #                        'n_train': 547584,
+                       #                        'n_val': 10624,
+                       #                        'n_test': 19584,
+                       #                        'percent_train': 0.59,
+                       #                        'percent_val': 0.56,
+                       #                        'percent_test': 0.58}
+                       #                    },
+                       # 'Conf_small_med': {'Conf': {'Time': 1,
+                       #                             'Batch': 128,
+                       #                             'Filter': 0.2},
+                       #                    'Result': {
+                       #                        'n_train': 545664,
+                       #                        'n_val': 10624,
+                       #                        'n_test': 19584,
+                       #                        'percent_train': 0.59,
+                       #                        'percent_val': 0.56,
+                       #                        'percent_test': 0.58}
+                       #                    },
+                       # 'Conf_small_high': {'Conf': {'Time': 1,
+                       #                              'Batch': 128,
+                       #                              'Filter': 0.3},
+                       #                     'Result': {
+                       #                        'n_train': 543488,
+                       #                        'n_val': 10496,
+                       #                        'n_test': 19456,
+                       #                        'percent_train': 0.59,
+                       #                        'percent_val': 0.56,
+                       #                        'percent_test': 0.58}
+                       #                     },
+                       # 'Conf_med_raw': {'Conf': {'Time': 2,
+                       #                           'Batch': 64,
+                       #                           'Filter': 0.0},
+                       #                  'Result': {
+                       #                        'n_train': 274560,
+                       #                        'n_val': 5312,
+                       #                        'n_test': 9856,
+                       #                        'percent_train': 0.61,
+                       #                        'percent_val': 0.58,
+                       #                        'percent_test': 0.60}
+                       #                  },
+                       # 'Conf_med_low': {'Conf': {'Time': 2,
+                       #                           'Batch': 64,
+                       #                           'Filter': 0.1},
+                       #                  'Result': {
+                       #                        'n_train': 272896,
+                       #                        'n_val': 5312,
+                       #                        'n_test': 9792,
+                       #                        'percent_train': 0.60,
+                       #                        'percent_val': 0.58,
+                       #                        'percent_test': 0.60}
+                       #                  },
+                       # 'Conf_med_med': {'Conf': {'Time': 2,
+                       #                           'Batch': 64,
+                       #                           'Filter': 0.2},
+                       #                  'Result': {
+                       #                        'n_train': 270976,
+                       #                        'n_val': 5248,
+                       #                        'n_test': 9728,
+                       #                        'percent_train': 0.60,
+                       #                        'percent_val': 0.58,
+                       #                        'percent_test': 0.60}
+                       #                  },
+                       # 'Conf_med_high': {'Conf': {'Time': 2,
+                       #                            'Batch': 64,
+                       #                            'Filter': 0.3},
+                       #                   'Result': {
+                       #                        'n_train': 268864,
+                       #                        'n_val': 5184,
+                       #                        'n_test': 9664,
+                       #                        'percent_train': 0.60,
+                       #                        'percent_val': 0.57,
+                       #                        'percent_test': 0.60}
+                       #                   },
+                       # 'Conf_high_raw': {'Conf': {'Time': 3,
+                       #                            'Batch': 32,
+                       #                            'Filter': 0.0},
+                       #                   'Result': {
+                       #                        'n_train': 182912,
+                       #                        'n_val': 3552,
+                       #                        'n_test': 6560,
+                       #                        'percent_train': 0.62,
+                       #                        'percent_val': 0.60,
+                       #                        'percent_test': 0.62}
+                       #                   },
+                       # 'Conf_high_low': {'Conf': {'Time': 3,
+                       #                            'Batch': 32,
+                       #                            'Filter': 0.1},
+                       #                   'Result': {
+                       #                        'n_train': 181408,
+                       #                        'n_val': 3520,
+                       #                        'n_test': 6496,
+                       #                        'percent_train': 0.62,
+                       #                        'percent_val': 0.59,
+                       #                        'percent_test': 0.62}
+                       #                   },
+                       # 'Conf_high_med': {'Conf': {'Time': 3,
+                       #                            'Batch': 32,
+                       #                            'Filter': 0.2},
+                       #                   'Result': {
+                       #                        'n_train': 179872,
+                       #                        'n_val': 3488,
+                       #                        'n_test': 6432,
+                       #                        'percent_train': 0.62,
+                       #                        'percent_val': 0.59,
+                       #                        'percent_test': 0.61}
+                       #                   },
+                       # 'Conf_high_high': {'Conf': {'Time': 3,
+                       #                             'Batch': 32,
+                       #                             'Filter': 0.3},
+                       #                    'Result': {
+                       #                        'n_train': 177568,
+                       #                        'n_val': 3456,
+                       #                        'n_test': 6368,
+                       #                        'percent_train': 0.61,
+                       #                        'percent_val': 0.59,
+                       #                        'percent_test': 0.61}
+                       #                    },
+                       # 'Conf_2_4': {'Conf': {'Time': 2,
+                       #                       'Batch': 64,
+                       #                       'Filter': 0.4
+                       #                       },
+                       #              'Result': {'n_train': 266816,
+                       #                         'n_val': 9536,
+                       #                         'n_test': 5120,
+                       #                         'percent_train': 0.60,
+                       #                         'percent_val': 0.59,
+                       #                         'percent_test': 0.57
+                       #                         }
+                       #              },
+                       # 'Conf_2_5': {'Conf': {'Time': 2,
+                       #                       'Batch': 64,
+                       #                       'Filter': 0.5
+                       #                       },
+                       #              'Result': {'n_train': 264704,
+                       #                         'n_val': 9472,
+                       #                         'n_test': 5120,
+                       #                         'percent_train': 0.59,
+                       #                         'percent_val': 0.59,
+                       #                         'percent_test': 0.57
+                       #                         }
+                       #              },
+                       'Conf_2_6': {'Conf': {'Time': 2,
+                                             'Batch': 64,
+                                             'Filter': 0.6
+                                             },
+                                    'Result': {'n_train': 262720,
+                                               'n_val': 9408,
+                                               'n_test': 5056,
+                                               'percent_train': 0.59,
+                                               'percent_val': 0.59,
+                                               'percent_test': 0.56
+                                               }
+                                    },
+                       'Conf_2_7': {'Conf': {'Time': 2,
+                                             'Batch': 64,
+                                             'Filter': 0.7
+                                             },
+                                    'Result': {'n_train': 260672,
+                                               'n_val': 9344,
+                                               'n_test': 4992,
+                                               'percent_train': 0.59,
+                                               'percent_val': 0.58,
+                                               'percent_test': 0.56
+                                               }
+                                    }
                        }
+
 _EARLY_STOPPING_TH = 0.01
 _MAX_Q_SIZE = 5
 _REPRODUCIBILITY = True
 _SEED = 77
 _N_SHIFT = 2
 _N_ROTATE = 4
-_MIN_EPOCH = 4
+_MIN_EPOCH = 10
 
 
 def load_trained_model(name='model'):
@@ -328,15 +377,15 @@ if __name__ == '__main__':
     if _LOAD_MODEL:
         model = load_trained_model('model_0')
     else:
-        initializations = ['lecun_uniform', 'glorot_normal',
-                           'glorot_uniform', 'he_normal',
-                           'he_uniform']
-        n_convs = [2, 3]
-        n_denses = [1, 2]
-        k_shape = [[16, 5], [32, 3], [64, 3]]
-        dense_shape = [64, 128]
-        dropouts = [0.25, 0.5]
-        opt_names = ['rmsprop']
+        initializations = ['he_uniform', 'glorot_normal',
+                           'glorot_uniform', 'lecun_uniform',
+                           'he_normal']
+        n_convs = [2]
+        n_denses = [1]
+        k_shape = [[16, 11], [32, 3]]#, [64, 3]]
+        dense_shape = [64]
+        dropouts = [0.5]
+        opt_names = ['adadelta']
         pooling = False
         mod_id = 0
         for init in initializations:
@@ -346,8 +395,9 @@ if __name__ == '__main__':
                         for opt_name in opt_names:
                             for key, conf in \
                                     _PREPROCESSING_CONF.items():
+                                window_time = conf['Conf']['Time']
                                 window_size = (_SEQ_FREQ
-                                               * conf['Conf']['Time'])
+                                               * window_time)
                                 batch_size = conf['Conf']['Batch']
                                 filter_th = conf['Conf']['Filter']
                                 n_train = conf['Result']['n_train']
@@ -356,8 +406,6 @@ if __name__ == '__main__':
                                     'percent_train']
                                 percent_pos_val = conf['Result'][
                                     'percent_val']
-                                percent_pos_test = conf['Result'][
-                                    'percent_test']
                                 [conf_name, model] = build_model(
                                     window_size,
                                     n_feature=_SEQ_FEATURE,
@@ -370,7 +418,8 @@ if __name__ == '__main__':
                                 print('STARTING TRAINING OF '
                                       'MODEL:\n' + conf_name +
                                       '\nN-Parameters='
-                                      + str(model.count_params()))
+                                      + str(model.count_params())
+                                      + '\nConf: ' + key)
                                 [model, result] = train_model(
                                     model, train_patient,
                                     validation_patient=val_patient,
@@ -384,7 +433,8 @@ if __name__ == '__main__':
                                 with open('Output.txt', 'a') as out_f:
                                     print('\nDate:'
                                           + str(datetime.date.today())
-                                          + '\nConfiguration:\n'
+                                          + '\nConfiguration: '
+                                          + key + '\n'
                                           + conf_name + '\nEpochs: '
                                           + str(result[1])
                                           + '\nTime: '
@@ -399,9 +449,11 @@ if __name__ == '__main__':
                                           + '\nPercentage of positive'
                                           + ' val samples: '
                                           + str(percent_pos_val)
+                                          + '\nWidow time in sec: '
+                                          + str(window_time)
                                           + '\nNumber of training '
                                           + 'samples: '
-                                          + str(percent_pos_test)
+                                          + str(n_train)
                                           + '\nNumber of model '
                                           + 'parameters: '
                                           + str(model.count_params())

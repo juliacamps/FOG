@@ -10,6 +10,7 @@ from keras.layers import Flatten
 from keras.layers.convolutional import AtrousConvolution1D
 from keras.layers.convolutional import Convolution1D
 from keras.layers.convolutional import MaxPooling1D
+from keras.regularizers import l2
 
 
 def build_model(window_size, n_feature=9, n_conv=1, n_dense=1,
@@ -24,6 +25,7 @@ def build_model(window_size, n_feature=9, n_conv=1, n_dense=1,
         he_kernel = k_shapes[0][1]
         model_.add(Convolution1D(nb_kernel, he_kernel,
                                  init=init,
+                                 W_regularizer=l2(),
                                  border_mode='same',
                                  input_shape=(window_size, n_feature),
                                  activation='relu'))
@@ -45,6 +47,7 @@ def build_model(window_size, n_feature=9, n_conv=1, n_dense=1,
         nb_kernel = k_shapes[i][0]
         he_kernel = k_shapes[i][1]
         model_.add(Convolution1D(nb_kernel, he_kernel, init=init,
+                                 W_regularizer=l2(),
                                  border_mode='same',
                                  activation='relu'))
         name += 'C(' + str(nb_kernel) + ', ' + str(he_kernel) + ')-'
@@ -57,14 +60,18 @@ def build_model(window_size, n_feature=9, n_conv=1, n_dense=1,
     model_.add(Flatten())
     for i in range(n_dense):
         model_.add(Dense(dense_shape[i], activation='relu',
-                         init=init))
+                         init=init,
+                         W_regularizer=l2()
+                         ))
         name += 'DN(' + str(dense_shape[i]) + ')-'
         
         if dropout > 0:
             model_.add(Dropout(dropout))
             name += 'D(' + str(dropout) + ')-'
 
-    model_.add(Dense(1, activation='sigmoid'))
+    model_.add(Dense(1, activation='sigmoid',
+                     W_regularizer=l2()
+                     ))
     name += 'DN(1, Sigmoid)|INIT:' + init + '|'
     
     model_.compile(loss='binary_crossentropy',
