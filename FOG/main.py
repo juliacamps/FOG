@@ -7,6 +7,8 @@ import numpy as np
 import random as rd
 import time
 
+from keras.callbacks import EarlyStopping
+
 from FOG.preprocessing_tools import generate_arrays_from_file
 from FOG.io_functions import get_patient_data_files
 from FOG.io_functions import save_model
@@ -17,10 +19,10 @@ from FOG.models import build_model
 _SEQ_CHANNEL = 1
 _SEQ_FEATURE = 9
 _N_CLASS = 2
-_N_EPOCH = 50
+_N_EPOCH = 100
 _N_FOLD = 1
 _SEQ_FREQ = 100
-_DETECTION_PROBLEM = 'walk'
+_DETECTION_PROBLEM = 'fog'
 _PREPROCESS_FINISHED = True
 _PRECALCULATE = False
 _LOAD_MODEL = False
@@ -171,42 +173,56 @@ _PREPROCESSING_CONF = {
                        #                         'percent_test': 0.57
                        #                         }
                        #              },
+                       'Conf_2_5': {'Conf': {'Time': 2,
+                                             'Batch': 64,
+                                             'Filter': 0.5
+                                             },
+                                    'Result': {'n_train': 185984,
+                                               'n_val': 6400,
+                                               'n_test': 3968,
+                                               'percent_train': 0.14,
+                                               'percent_val': 0.13,
+                                               'percent_test': 0.24
+                                               }
+                                    }#,
+    
                        # 'Conf_2_5': {'Conf': {'Time': 2,
                        #                       'Batch': 64,
                        #                       'Filter': 0.5
                        #                       },
-                       #              'Result': {'n_train': 264704,
-                       #                         'n_val': 9472,
-                       #                         'n_test': 5120,
+                       #              'Result': {'n_train': 184960,
+                       #                         'n_val': 6336,
+                       #                         'n_test': 3968,
+                       #                         'percent_train': 0.41,
+                       #                         'percent_val': 0.39,
+                       #                         'percent_test': 0.44
+                       #                         }
+                       #              }#,
+    
+                       # 'Conf_2_6': {'Conf': {'Time': 2,
+                       #                       'Batch': 64,
+                       #                       'Filter': 0.6
+                       #                       },
+                       #              'Result': {'n_train': 262848,
+                       #                         'n_val': 9408,
+                       #                         'n_test': 5056,
                        #                         'percent_train': 0.59,
                        #                         'percent_val': 0.59,
-                       #                         'percent_test': 0.57
+                       #                         'percent_test': 0.56
                        #                         }
-                       #              },
-                       'Conf_2_6': {'Conf': {'Time': 2,
-                                             'Batch': 64,
-                                             'Filter': 0.6
-                                             },
-                                    'Result': {'n_train': 262720,
-                                               'n_val': 9408,
-                                               'n_test': 5056,
-                                               'percent_train': 0.59,
-                                               'percent_val': 0.59,
-                                               'percent_test': 0.56
-                                               }
-                                    },
-                       'Conf_2_7': {'Conf': {'Time': 2,
-                                             'Batch': 64,
-                                             'Filter': 0.7
-                                             },
-                                    'Result': {'n_train': 260672,
-                                               'n_val': 9344,
-                                               'n_test': 4992,
-                                               'percent_train': 0.59,
-                                               'percent_val': 0.58,
-                                               'percent_test': 0.56
-                                               }
-                                    }
+                       #              }#,
+                       # 'Conf_2_7': {'Conf': {'Time': 2,
+                       #                       'Batch': 64,
+                       #                       'Filter': 0.7
+                       #                       },
+                       #              'Result': {'n_train': 260800,
+                       #                         'n_val': 9344,
+                       #                         'n_test': 4992,
+                       #                         'percent_train': 0.59,
+                       #                         'percent_val': 0.59,
+                       #                         'percent_test': 0.56
+                       #                         }
+                       #              }
                        }
 
 _EARLY_STOPPING_TH = 0.01
@@ -309,12 +325,18 @@ def single_train(
     epochs = 0
     status = 'OK'
 
+    #
+    #
+    # early_stopping = EarlyStopping(monitor='val_loss', patience=2)
+    # model.fit(X, y, validation_split=0.2, callbacks=[early_stopping])
+    
+
     for epoch_it in range(n_epoch):
         print('\n==================\nSTARTING EPOCH: ' + str(epoch_it)
               + '\n========================')
         result_ = [0, 0]
         try:
-            model_.fit_generator(train_generator,
+            hist = model_.fit_generator(train_generator,
                                  samples_per_epoch=n_train_sample,
                                  nb_epoch=1, verbose=1, callbacks=[],
                                  validation_data=None,
@@ -326,6 +348,7 @@ def single_train(
             status = 'ERROR:' + str(repr(e))
             break
         else:
+            
             if validate:
                 try:
                     result_ = model_.evaluate_generator(
@@ -338,13 +361,14 @@ def single_train(
                     epochs += 1
                     print(result_)
                     acc = result_[1]
-                    if ((acc - prev_acc) < stopping_th or (1 - acc)
-                            < stopping_th) and (
-                                (epoch_it + 1) >= _MIN_EPOCH):
-                        print('Training Finished due to '
-                              'EARLY STOPPING')
-                        break
+                    # if ((acc - prev_acc) < stopping_th or (1 - acc)
+                    #         < stopping_th) and (
+                    #             (epoch_it + 1) >= _MIN_EPOCH):
+                    #     print('Training Finished due to '
+                    #           'EARLY STOPPING')
+                    #     break
                     prev_acc = acc
+
             else:
                 print('Validation is not configured, training will '
                       'stop by epoch counter')
@@ -377,13 +401,13 @@ if __name__ == '__main__':
     if _LOAD_MODEL:
         model = load_trained_model('model_0')
     else:
-        initializations = ['he_uniform', 'glorot_normal',
+        initializations = ['glorot_normal',
                            'glorot_uniform', 'lecun_uniform',
-                           'he_normal']
+                           'he_normal', 'he_uniform']
         n_convs = [2]
         n_denses = [1]
-        k_shape = [[16, 11], [32, 3]]#, [64, 3]]
-        dense_shape = [64]
+        k_shape = [[8, 5], [16, 3]]
+        dense_shape = [32]
         dropouts = [0.5]
         opt_names = ['adadelta']
         pooling = False

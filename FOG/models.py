@@ -25,7 +25,7 @@ def build_model(window_size, n_feature=9, n_conv=1, n_dense=1,
         he_kernel = k_shapes[0][1]
         model_.add(Convolution1D(nb_kernel, he_kernel,
                                  init=init,
-                                 W_regularizer=l2(),
+                                 W_regularizer=l2(l=0.01),
                                  border_mode='same',
                                  input_shape=(window_size, n_feature),
                                  activation='relu'))
@@ -47,7 +47,7 @@ def build_model(window_size, n_feature=9, n_conv=1, n_dense=1,
         nb_kernel = k_shapes[i][0]
         he_kernel = k_shapes[i][1]
         model_.add(Convolution1D(nb_kernel, he_kernel, init=init,
-                                 W_regularizer=l2(),
+                                 W_regularizer=l2(l=0.01),
                                  border_mode='same',
                                  activation='relu'))
         name += 'C(' + str(nb_kernel) + ', ' + str(he_kernel) + ')-'
@@ -60,8 +60,8 @@ def build_model(window_size, n_feature=9, n_conv=1, n_dense=1,
     model_.add(Flatten())
     for i in range(n_dense):
         model_.add(Dense(dense_shape[i], activation='relu',
-                         init=init,
-                         W_regularizer=l2()
+                         init=init
+                         , W_regularizer=l2(l=0.01)
                          ))
         name += 'DN(' + str(dense_shape[i]) + ')-'
         
@@ -69,8 +69,8 @@ def build_model(window_size, n_feature=9, n_conv=1, n_dense=1,
             model_.add(Dropout(dropout))
             name += 'D(' + str(dropout) + ')-'
 
-    model_.add(Dense(1, activation='sigmoid',
-                     W_regularizer=l2()
+    model_.add(Dense(1, activation='sigmoid'
+                     , W_regularizer=l2(l=0.01)
                      ))
     name += 'DN(1, Sigmoid)|INIT:' + init + '|'
     

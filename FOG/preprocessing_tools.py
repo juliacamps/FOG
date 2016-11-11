@@ -83,7 +83,7 @@ def generate_arrays_from_file(model_, path_list, window_size,
                             path, delim_whitespace=True,
                             dtype=float, chunksize=window_size,
                             na_filter=False, skiprows=shift):
-                        X = X.as_matrix()
+                        X = (X.as_matrix())[:, :-1]
                         y = check_label(X[:, -1], filter_threshold)
                         if y == -1 and np.max(X[:, -1]) != -1:
                             discarded += 1
@@ -101,8 +101,8 @@ def generate_arrays_from_file(model_, path_list, window_size,
                             batch_Y.append(y)
                             batch_it += 1
                             if batch_it == batch_size:
-                                # yield (np.asarray(batch_X),
-                                #        np.asarray(batch_Y))
+                                yield (np.asarray(batch_X),
+                                       np.asarray(batch_Y))
                                 y_cum += sum(np.asarray(batch_Y))
                                 batch_count += 1
                                 batch_X = []
@@ -115,18 +115,18 @@ def generate_arrays_from_file(model_, path_list, window_size,
                             # model_.reset_states()
             
             # model_.reset_states()
-        n_samples = batch_count * batch_size
-        print('Total number of samples in all data: ')
-        print(aux_count)
-        print('Num Batches: ' + str(batch_count))
-        print('Available number of samples: ' + str(
-            n_samples))
-        print('Percentage of FOG:')
-        print(y_cum / n_samples)
-        print('Percentage of lost samples:')
-        print(1 - (n_samples * window_size) / aux_count)
-        print('Discarded for filtering: ' + str(discarded))
-        break
+        # n_samples = batch_count * batch_size
+        # print('Total number of samples in all data: ')
+        # print(aux_count)
+        # print('Num Batches: ' + str(batch_count))
+        # print('Available number of samples: ' + str(
+        #     n_samples))
+        # print('Percentage of FOG:')
+        # print(y_cum / n_samples)
+        # print('Percentage of lost samples:')
+        # print(1 - (n_samples * window_size) / aux_count)
+        # print('Discarded for filtering: ' + str(discarded))
+        # break
 
 
 def load_instance(line, preprocess=False):
@@ -215,9 +215,7 @@ def full_preprocessing(train_patient, type_name='all'):
         for file in train_file:
             [X, y] = get_dataset(file)
             X = check_data(X)
-            save_matrix_data(
-                np.concatenate((X, np.reshape(y, (y.shape[0], 1))),
-                               axis=1), file)
+            save_matrix_data(np.concatenate((X, y), axis=1), file)
 
 
 def generate_dataset(part=[0.7, 0.15, 0.15]):
@@ -287,7 +285,7 @@ class AuxModel():
 
 
 if __name__ == '__main__':
-    problem = 'walk'
+    problem = 'fog'
     reproducibility = True
     seed = 77
     if reproducibility:
@@ -311,7 +309,7 @@ if __name__ == '__main__':
                                        type_name=problem)]
     batch_sizes = [64]
     time_windows = [2]
-    filter_thresholds = [0.6, 0.7]
+    filter_thresholds = [0.5]
     data_freq = 100
     n_shift = 2
     n_rotate = 4

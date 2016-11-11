@@ -2064,3 +2064,158 @@ Widow time in sec: 2
 Number of training samples: 262720
 Number of model parameters: 412897
 Model-ID: 4
+
+Date:2016-11-08
+Configuration: Conf_2_7
+C(16, 11)-DR(0.5)-C(32, 3)-DR(0.5)-DN(64)-D(0.5)-DN(1, Sigmoid)|INIT:he_uniform|OPT: adadelta
+Epochs: 10
+Time: 3816.234751
+Final Status: OK
+Validation acc: 0.741224315068
+Percentage of positive train samples: 0.59
+Percentage of positive val samples: 0.59
+Widow time in sec: 2
+Number of training samples: 260800
+Number of model parameters: 412897
+Model-ID: 0
+
+
+
+####################################################
+
+Date:2016-11-09
+Configuration: Conf_2_7
+C(16, 5)-DR(0.5)-C(32, 3)-DR(0.5)-DN(64)-D(0.5)-DN(1, Sigmoid)|INIT:he_uniform|OPT: adadelta
+Epochs: 50
+Time: 19225.191252
+Final Status: OK
+Validation acc: 0.715325342466
+Percentage of positive train samples: 0.59
+Percentage of positive val samples: 0.59
+Widow time in sec: 2
+Number of training samples: 260800
+Number of model parameters: 412033
+Model-ID: 0
+
+Date:2016-11-09
+Configuration: Conf_2_6
+C(16, 5)-DR(0.5)-C(32, 3)-DR(0.5)-DN(64)-D(0.5)-DN(1, Sigmoid)|INIT:he_uniform|OPT: adadelta
+Epochs: 50
+Time: 19129.173149000002
+Final Status: OK
+Validation acc: 0.724808673469
+Percentage of positive train samples: 0.59
+Percentage of positive val samples: 0.59
+Widow time in sec: 2
+Number of training samples: 262848
+Number of model parameters: 412033
+Model-ID: 1
+
+Date:2016-11-09
+Configuration: Conf_2_7
+C(16, 5)-DR(0.5)-C(32, 3)-DR(0.5)-DN(64)-D(0.5)-DN(128)-D(0.5)-DN(1, Sigmoid)|INIT:he_uniform|OPT: adadelta
+Epochs: 50
+Time: 19255.637710000003
+Final Status: OK
+Validation acc: 0.672196061644
+Percentage of positive train samples: 0.59
+Percentage of positive val samples: 0.59
+Widow time in sec: 2
+Number of training samples: 260800
+Number of model parameters: 420417
+Model-ID: 2
+
+Date:2016-11-09
+Configuration: Conf_2_6
+C(16, 5)-DR(0.5)-C(32, 3)-DR(0.5)-DN(64)-D(0.5)-DN(128)-D(0.5)-DN(1, Sigmoid)|INIT:he_uniform|OPT: adadelta
+Epochs: 50
+Time: 20293.587107
+Final Status: OK
+Validation acc: 0.709608843537
+Percentage of positive train samples: 0.59
+Percentage of positive val samples: 0.59
+Widow time in sec: 2
+Number of training samples: 262848
+Number of model parameters: 420417
+Model-ID: 3
+
+Date:2016-11-10
+Configuration: Conf_2_6
+C(16, 5)-DR(0.5)-C(32, 3)-DR(0.5)-DN(64)-D(0.5)-DN(1, Sigmoid)|INIT:he_uniform|OPT: adadelta
+Epochs: 50
+Time: 19625.094656
+Final Status: OK
+Validation acc: 0.591730442177
+Percentage of positive train samples: 0.59
+Percentage of positive val samples: 0.59
+Widow time in sec: 2
+Number of training samples: 262848
+Number of model parameters: 412033
+Model-ID: 0
+
+Date:2016-11-10
+Configuration: Conf_2_5
+C(16, 5)-DR(0.5)-C(32, 3)-DR(0.5)-DN(64)-D(0.5)-DN(1, Sigmoid)|INIT:he_uniform|OPT: adadelta
+Epochs: 50
+Time: 19863.254587
+Final Status: OK
+Validation acc: 0.637985641892
+Percentage of positive train samples: 0.59
+Percentage of positive val samples: 0.59
+Widow time in sec: 2
+Number of training samples: 264704
+Number of model parameters: 412033
+Model-ID: 1
+
+Date:2016-11-10
+Configuration: Conf_2_4
+C(16, 5)-DR(0.5)-C(32, 3)-DR(0.5)-DN(64)-D(0.5)-DN(1, Sigmoid)|INIT:he_uniform|OPT: adadelta
+Epochs: 50
+Time: 19886.274420999995
+Final Status: OK
+Validation acc: 0.625734060403
+Percentage of positive train samples: 0.6
+Percentage of positive val samples: 0.59
+Widow time in sec: 2
+Number of training samples: 266816
+Number of model parameters: 412033
+Model-ID: 2
+
+
+##########################################################
+BOOLEAN ERROR FIXED
+##########################################################
+
+Date:2016-11-10
+Configuration: Conf_2_5
+C(8, 11)-DR(0.5)-C(16, 3)-DR(0.5)-DN(32)-D(0.5)-DN(1, Sigmoid)|INIT:he_uniform|OPT: adadelta
+Epochs: 50
+Time: 18038.072183
+Final Status: OK
+Validation acc: 0.756944444444
+Percentage of positive train samples: 0.41
+Percentage of positive val samples: 0.39
+Widow time in sec: 2
+Number of training samples: 184960
+Number of model parameters: 103665
+Model-ID: 0
+
+#########################
+FOG
+#########################
+
+
+
+Date:2016-11-11
+Configuration: Conf_2_5
+C(8, 11)-DR(0.5)-C(8, 5)-DR(0.5)-DN(32)-D(0.5)-DN(1, Sigmoid)|INIT:he_uniform|OPT: adadelta
+Epochs: 100
+Time: 34781.700288
+Final Status: OK
+Validation acc: 0.8725
+Percentage of positive train samples: 0.14
+Percentage of positive val samples: 0.13
+Widow time in sec: 2
+Number of training samples: 185984
+Number of model parameters: 52393
+Model-ID: 0
