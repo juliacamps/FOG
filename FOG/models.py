@@ -11,32 +11,44 @@ from keras.layers.convolutional import AtrousConvolution1D
 from keras.layers.convolutional import Convolution1D
 from keras.layers.convolutional import MaxPooling1D
 from keras.regularizers import l2
+import keras.backend as K
+
+
+def mean_pred(y_true, y_pred):
+    """"""
+    return K.mean(y_pred)
 
 
 def build_model(window_size, n_feature=9, n_conv=1, n_dense=1,
                 k_shapes=[[32, 3]], dense_shape=[128],
                 init='uniform', opt_name='adadelta',
-                pooling=False, dropout=0.5):
+                pooling=False, dropout=0.5, atrous=False):
     """Build the model"""
     model_ = Sequential()
     name = ''
     if n_conv > 0:
         nb_kernel = k_shapes[0][0]
         he_kernel = k_shapes[0][1]
-        model_.add(Convolution1D(nb_kernel, he_kernel,
+        if atrous:
+            model_.add(Convolution1D(nb_kernel, he_kernel,
                                  init=init,
-                                 W_regularizer=l2(l=0.01),
+                                 # W_regularizer=l2(l=0.01),
                                  border_mode='same',
                                  input_shape=(window_size, n_feature),
                                  activation='relu'))
-        # model_.add(AtrousConvolution1D(n_kernel, h_kernel,
-        #                                atrous_rate=2,
-        #                                init=init,
-        #                                border_mode='same',
-        #                                input_shape=(window_size,
-        #                                             n_feature),
-        #                                activation='relu'))
-        name += 'C(' + str(nb_kernel) + ', ' + str(he_kernel) + ')-'
+            name += ('C(' + str(nb_kernel) + ', ' + str(he_kernel)
+                     + ')-')
+        else:
+            model_.add(AtrousConvolution1D(nb_kernel, he_kernel,
+                                       atrous_rate=2,
+                                       init=init,
+                                       # W_regularizer=l2(l=0.01),
+                                       border_mode='same',
+                                       input_shape=(window_size,
+                                                    n_feature),
+                                       activation='relu'))
+            name += ('A(' + str(nb_kernel) + ', ' + str(he_kernel)
+                     + ')-')
         if pooling:
             model_.add(MaxPooling1D(pool_length=2))
             name += 'P-'
@@ -47,7 +59,7 @@ def build_model(window_size, n_feature=9, n_conv=1, n_dense=1,
         nb_kernel = k_shapes[i][0]
         he_kernel = k_shapes[i][1]
         model_.add(Convolution1D(nb_kernel, he_kernel, init=init,
-                                 W_regularizer=l2(l=0.01),
+                                 # W_regularizer=l2(l=0.01),
                                  border_mode='same',
                                  activation='relu'))
         name += 'C(' + str(nb_kernel) + ', ' + str(he_kernel) + ')-'
@@ -61,7 +73,7 @@ def build_model(window_size, n_feature=9, n_conv=1, n_dense=1,
     for i in range(n_dense):
         model_.add(Dense(dense_shape[i], activation='relu',
                          init=init
-                         , W_regularizer=l2(l=0.01)
+                         # , W_regularizer=l2(l=0.01)
                          ))
         name += 'DN(' + str(dense_shape[i]) + ')-'
         
@@ -70,13 +82,14 @@ def build_model(window_size, n_feature=9, n_conv=1, n_dense=1,
             name += 'D(' + str(dropout) + ')-'
 
     model_.add(Dense(1, activation='sigmoid'
-                     , W_regularizer=l2(l=0.01)
+                     # , W_regularizer=l2(l=0.01)
                      ))
     name += 'DN(1, Sigmoid)|INIT:' + init + '|'
     
     model_.compile(loss='binary_crossentropy',
                    optimizer=opt_name,
-                   metrics=['accuracy'])
+                   metrics=['accuracy', 'precision',
+                            'recall', mean_pred])
     name += 'OPT: ' + opt_name
     
     return [name, model_]

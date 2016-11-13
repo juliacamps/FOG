@@ -22,7 +22,7 @@ _SHIFT_RANGE = [0, 1]
 _ROT_RANGE = np.array((-20, 20)) * np.pi / 180
 
 
-def generate_arrays_from_file(model_, path_list, window_size,
+def generate_arrays_from_file(path_list, window_size,
                               batch_size=32,
                               preprocess=False, temporal=False,
                               augment_count=[0],
@@ -127,6 +127,23 @@ def generate_arrays_from_file(model_, path_list, window_size,
         # print(1 - (n_samples * window_size) / aux_count)
         # print('Discarded for filtering: ' + str(discarded))
         # break
+
+
+def confusion_matrix(y_true, y_pred):
+    """"""
+    conf_mat = np.zeros((2, 2))
+    for i in range(np.asarray(y_true).shape[0]):
+        if int(y_true[i]) == 1:
+            if int(y_true[i]) == int(np.round(y_pred[i])):
+                conf_mat[0, 0] += 1
+            else:
+                conf_mat[0, 1] += 1
+        else:
+            if int(y_true[i]) == int(np.round(y_pred[i])):
+                conf_mat[1, 1] += 1
+            else:
+                conf_mat[1, 0] += 1
+    return conf_mat
 
 
 def load_instance(line, preprocess=False):
@@ -307,31 +324,32 @@ if __name__ == '__main__':
     test_file = [file for patient in test_data for file in
                 get_patient_data_files(patient,
                                        type_name=problem)]
-    batch_sizes = [64]
-    time_windows = [2]
+    batch_sizes = [32]
+    time_windows = [3]
     filter_thresholds = [0.5]
     data_freq = 100
     n_shift = 2
     n_rotate = 4
     for batch_it in range(len(batch_sizes)):
         batch_size = batch_sizes[batch_it]
+        
         time_window = time_windows[batch_it]
+        window_size = int(time_window * data_freq)
         for filter_th in filter_thresholds:
             print('\nBatch_s:' + str(batch_size) + ' window:' +
                   str(time_window) + ' filter:' + str(filter_th))
-            window_size = int(time_window * data_freq)
             print('TRAIN')
-            generate_arrays_from_file(model, train_file, window_size,
+            generate_arrays_from_file(train_file, window_size,
                                       batch_size=batch_size,
                                       augment_count=[n_shift, n_rotate],
                                       augement_data_type='all',
                                       filter_threshold=filter_th)
             print('VALIDATION')
-            generate_arrays_from_file(model, val_file, window_size,
+            generate_arrays_from_file(val_file, window_size,
                                       batch_size=batch_size,
                                       filter_threshold=filter_th)
             print('TEST')
-            generate_arrays_from_file(model, test_file, window_size,
+            generate_arrays_from_file(test_file, window_size,
                                       batch_size=batch_size,
                                       filter_threshold=filter_th)
     print('END')

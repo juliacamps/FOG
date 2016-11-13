@@ -10,6 +10,7 @@ import time
 from keras.callbacks import EarlyStopping
 
 from FOG.preprocessing_tools import generate_arrays_from_file
+from FOG.preprocessing_tools import confusion_matrix
 from FOG.io_functions import get_patient_data_files
 from FOG.io_functions import save_model
 from FOG.io_functions import load_model
@@ -19,7 +20,7 @@ from FOG.models import build_model
 _SEQ_CHANNEL = 1
 _SEQ_FEATURE = 9
 _N_CLASS = 2
-_N_EPOCH = 100
+_N_EPOCH = 30
 _N_FOLD = 1
 _SEQ_FREQ = 100
 _DETECTION_PROBLEM = 'fog'
@@ -173,19 +174,30 @@ _PREPROCESSING_CONF = {
                        #                         'percent_test': 0.57
                        #                         }
                        #              },
-                       'Conf_2_5': {'Conf': {'Time': 2,
-                                             'Batch': 64,
+                       # 'Conf_2_5': {'Conf': {'Time': 2,
+                       #                       'Batch': 64,
+                       #                       'Filter': 0.5
+                       #                       },
+                       #              'Result': {'n_train': 185984,
+                       #                         'n_val': 6400,
+                       #                         'n_test': 3968,
+                       #                         'percent_train': 0.14,
+                       #                         'percent_val': 0.13,
+                       #                         'percent_test': 0.24
+                       #                         }
+                       #              },
+                       'Conf_3_5': {'Conf': {'Time': 3,
+                                             'Batch': 32,
                                              'Filter': 0.5
                                              },
-                                    'Result': {'n_train': 185984,
-                                               'n_val': 6400,
-                                               'n_test': 3968,
-                                               'percent_train': 0.14,
+                                    'Result': {'n_train': 122304,
+                                               'n_val': 4160,
+                                               'n_test': 2560,
+                                               'percent_train': 0.15,
                                                'percent_val': 0.13,
                                                'percent_test': 0.24
                                                }
                                     }#,
-    
                        # 'Conf_2_5': {'Conf': {'Time': 2,
                        #                       'Batch': 64,
                        #                       'Filter': 0.5
@@ -295,18 +307,17 @@ def train_model(model_, train_patient, validation_patient=None,
     return [trained_model, result]
 
 
-def single_train(
-        model_, train_file, validation_file=None, n_epoch=_N_EPOCH,
-        stopping_th=_EARLY_STOPPING_TH, n_train_sample=0,
-        n_val_sample=0, batch_size=32, window_size=_SEQ_FREQ,
-        filter_threshold=0.2):
+def single_train(model_, train_file, validation_file=None,
+                 n_epoch=_N_EPOCH, stopping_th=_EARLY_STOPPING_TH,
+                 n_train_sample=0, n_val_sample=0, batch_size=32,
+                 window_size=_SEQ_FREQ, filter_threshold=0.2):
     """Train the model
     
     
     """
     
     train_generator = generate_arrays_from_file(
-        model_, train_file, window_size, batch_size=batch_size,
+        train_file, window_size, batch_size=batch_size,
         augment_count=[_N_SHIFT, _N_ROTATE],
         augement_data_type='all', filter_threshold=filter_threshold)
 
@@ -314,69 +325,133 @@ def single_train(
     validation_generator = None
     if validation_file is not None:
         validation_generator = generate_arrays_from_file(
-            model_, validation_file, window_size,
+            validation_file, window_size,
             batch_size=batch_size, filter_threshold=filter_threshold)
         validate = True
 
-    prev_acc = 0
-    result_ = None
     acc = 0
     time_count = time.clock()
     epochs = 0
     status = 'OK'
+    result_ = np.zeros(6)
 
-    #
-    #
-    # early_stopping = EarlyStopping(monitor='val_loss', patience=2)
-    # model.fit(X, y, validation_split=0.2, callbacks=[early_stopping])
-    
-
+    abort_train = False
     for epoch_it in range(n_epoch):
         print('\n==================\nSTARTING EPOCH: ' + str(epoch_it)
               + '\n========================')
-        result_ = [0, 0]
-        try:
-            hist = model_.fit_generator(train_generator,
-                                 samples_per_epoch=n_train_sample,
-                                 nb_epoch=1, verbose=1, callbacks=[],
-                                 validation_data=None,
-                                 nb_val_samples=None,
-                                 class_weight=None,
-                                 max_q_size=_MAX_Q_SIZE, nb_worker=1,
-                                 pickle_safe=False)
-        except Exception as e:
-            status = 'ERROR:' + str(repr(e))
+        end_epoch = False
+        samples_epoch_count = 0
+        # Notice that the following would be an endless loop
+        # without the counter exit condition
+        for X, y in train_generator:
+            try:
+                model_.train_on_batch(X, y, class_weight={0: 1,
+                                                          1: 1000})
+            except Exception as e:
+                status = ('ERROR: While training the model: '
+                          + str(repr(e)))
+                end_epoch = True
+                abort_train = True
+            else:
+                samples_epoch_count += batch_size
+                
+            if (samples_epoch_count + 1) >= n_train_sample:
+                end_epoch = True
+            
+            if end_epoch:
+                # End loop condition (only condition)
+                break
+        if status == 'OK':
+            [status, train_conf_mat] = get_conf_mat(
+                model_, train_generator, n_train_sample, batch_size,
+                msg='train error prediction')
+            if status != 'OK':
+                abort_train = True
+                
+            elif validate:
+                [status, val_conf_mat] = get_conf_mat(
+                    model_, validation_generator, n_val_sample,
+                    batch_size, msg='validation error prediction')
+                
+                if status != 'OK':
+                    abort_train = True
+                    
+            else:
+                print('Validation is not configured')
+
+        if abort_train:
+            # An error occurred while training -> Abort and start next
             break
         else:
+            epochs += 1
             
-            if validate:
-                try:
-                    result_ = model_.evaluate_generator(
-                        validation_generator,
-                        val_samples=n_val_sample)
-                except Exception as e:
-                    status = 'ERROR:' + str(repr(e))
-                    break
-                else:
-                    epochs += 1
-                    print(result_)
-                    acc = result_[1]
-                    # if ((acc - prev_acc) < stopping_th or (1 - acc)
-                    #         < stopping_th) and (
-                    #             (epoch_it + 1) >= _MIN_EPOCH):
-                    #     print('Training Finished due to '
-                    #           'EARLY STOPPING')
-                    #     break
-                    prev_acc = acc
-
-            else:
-                print('Validation is not configured, training will '
-                      'stop by epoch counter')
+            print('Train conf-mat:')
+            print(train_conf_mat)
+            [ACC, PPV, TPR] = acc_precision_recall(train_conf_mat)
+            print('ACC: ' + str(ACC))
+            print('Train precision: ' + str(PPV))
+            print('Train recall: ' + str(TPR))
+            result_[0] = ACC
+            result_[1] = PPV
+            result_[2] = TPR
+            
+            print('Validation conf-mat:')
+            print(val_conf_mat)
+            [ACC, PPV, TPR] = acc_precision_recall(val_conf_mat)
+            print('ACC: ' + str(ACC))
+            print('Validation precision: ' + str(PPV))
+            print('Validation recall: ' + str(TPR))
+            result_[3] = ACC
+            result_[4] = PPV
+            result_[5] = TPR
+            
         print('==================\nENDED EPOCH: ' + str(epoch_it)
               + '\n========================')
-    print('TRAINING FINISHED WITH VALIDATION ACC: ' + str(acc))
+            
+    if not abort_train:
+        print('TRAINING FINISHED WITH VALIDATION ACC: ' + str(acc))
+    else:
+        print('TRAINING WAS ABORTED')
     return [model_, [result_, epochs, (time.clock() - time_count),
                      status]]
+
+
+def acc_precision_recall(conf_mat):
+    """"""
+    TP = conf_mat[0, 0]
+    FN = conf_mat[0, 1]
+    FP = conf_mat[1, 0]
+    TN = conf_mat[1, 1]
+    ACC = (TP + TN) / (TP + FN + FP + TN)
+    PPV = TP / (TP + FP)
+    TPR = TP / (TP + FN)
+    return [ACC, PPV, TPR]
+
+
+def get_conf_mat(model_, generator, samples_count, batch_size, msg):
+    """"""
+    
+    conf_mat = np.zeros((2, 2))
+    status = 'OK'
+    end_epoch = False
+    samples_it = 0
+    for X, y_true in generator:
+        try:
+            y_pred = model_.predict_on_batch(X)
+        except Exception as e:
+            status = ('ERROR: While ' + msg + ': ' + str(repr(e)))
+            end_epoch = True
+        else:
+            conf_mat += confusion_matrix(y_true, y_pred)
+            samples_it += batch_size
+        if samples_it >= samples_count:
+            end_epoch = True
+    
+        if end_epoch:
+            # End loop condition (only condition)
+            break
+    return [status, conf_mat]
+
 
 if __name__ == '__main__':
     
@@ -404,89 +479,110 @@ if __name__ == '__main__':
         initializations = ['glorot_normal',
                            'glorot_uniform', 'lecun_uniform',
                            'he_normal', 'he_uniform']
-        n_convs = [2]
+        n_convs = [3]
         n_denses = [1]
-        k_shape = [[8, 5], [16, 3]]
-        dense_shape = [32]
-        dropouts = [0.5]
+        k_shape = [[32, 11], [32, 5], [64, 3]]
+        dense_shape = [128]
+        dropouts = [0.0, 0.5]
         opt_names = ['adadelta']
-        pooling = False
+        poolings = [False, True]
+        atrous = [False, True]
         mod_id = 0
         for init in initializations:
             for n_conv in n_convs:
                 for n_dense in n_denses:
-                    for dropout in dropouts:
-                        for opt_name in opt_names:
-                            for key, conf in \
-                                    _PREPROCESSING_CONF.items():
-                                window_time = conf['Conf']['Time']
-                                window_size = (_SEQ_FREQ
-                                               * window_time)
-                                batch_size = conf['Conf']['Batch']
-                                filter_th = conf['Conf']['Filter']
-                                n_train = conf['Result']['n_train']
-                                n_val = conf['Result']['n_val']
-                                percent_pos_train = conf['Result'][
-                                    'percent_train']
-                                percent_pos_val = conf['Result'][
-                                    'percent_val']
-                                [conf_name, model] = build_model(
-                                    window_size,
-                                    n_feature=_SEQ_FEATURE,
-                                    n_conv=n_conv, n_dense=n_dense,
-                                    k_shapes=k_shape,
-                                    dense_shape=dense_shape,
-                                    opt_name=opt_name,
-                                    pooling=pooling,
-                                    dropout=dropout, init=init)
-                                print('STARTING TRAINING OF '
-                                      'MODEL:\n' + conf_name +
-                                      '\nN-Parameters='
-                                      + str(model.count_params())
-                                      + '\nConf: ' + key)
-                                [model, result] = train_model(
-                                    model, train_patient,
-                                    validation_patient=val_patient,
-                                    type_name=_DETECTION_PROBLEM,
-                                    stopping_th=_EARLY_STOPPING_TH,
-                                    n_train_sample=n_train,
-                                    n_val_sample=n_val,
-                                    filter_threshold=filter_th,
-                                    batch_size=batch_size,
-                                    window_size=window_size)
-                                with open('Output.txt', 'a') as out_f:
-                                    print('\nDate:'
-                                          + str(datetime.date.today())
-                                          + '\nConfiguration: '
-                                          + key + '\n'
-                                          + conf_name + '\nEpochs: '
-                                          + str(result[1])
-                                          + '\nTime: '
-                                          + str(result[2])
-                                          + '\nFinal Status: '
-                                          + result[3]
-                                          + '\nValidation acc: '
-                                          + str(result[0][1])
-                                          + '\nPercentage of positive'
-                                          + ' train samples: '
-                                          + str(percent_pos_train)
-                                          + '\nPercentage of positive'
-                                          + ' val samples: '
-                                          + str(percent_pos_val)
-                                          + '\nWidow time in sec: '
-                                          + str(window_time)
-                                          + '\nNumber of training '
-                                          + 'samples: '
-                                          + str(n_train)
-                                          + '\nNumber of model '
-                                          + 'parameters: '
-                                          + str(model.count_params())
-                                          + '\nModel-ID: '
-                                          + str(mod_id),
-                                          file=out_f)
-                                    mod_id += 1
-                                    save_model(model,
-                                               'model_' + str(mod_id))
+                    for pooling in poolings:
+                        for dropout in dropouts:
+                            for atrou in atrous:
+                                for opt_name in opt_names:
+                                    for key, conf in \
+                                            _PREPROCESSING_CONF.items():
+                                        window_time = conf['Conf']['Time']
+                                        window_size = (_SEQ_FREQ
+                                                       * window_time)
+                                        batch_size = conf['Conf']['Batch']
+                                        filter_th = conf['Conf']['Filter']
+                                        n_train = conf['Result']['n_train']
+                                        n_val = conf['Result']['n_val']
+                                        percent_pos_train = conf['Result'][
+                                            'percent_train']
+                                        percent_pos_val = conf['Result'][
+                                            'percent_val']
+                                        [conf_name, model] = build_model(
+                                            window_size,
+                                            n_feature=_SEQ_FEATURE,
+                                            n_conv=n_conv, n_dense=n_dense,
+                                            k_shapes=k_shape,
+                                            dense_shape=dense_shape,
+                                            opt_name=opt_name,
+                                            pooling=pooling,
+                                            dropout=dropout,
+                                            init=init,
+                                            atrous=atrou)
+                                        print('STARTING TRAINING OF '
+                                              'MODEL:\n' + conf_name +
+                                              '\nN-Parameters='
+                                              + str(model.count_params())
+                                              + '\nConf: ' + key)
+                                        [model, result] = train_model(
+                                            model, train_patient,
+                                            validation_patient=val_patient,
+                                            type_name=_DETECTION_PROBLEM,
+                                            stopping_th=_EARLY_STOPPING_TH,
+                                            n_train_sample=n_train,
+                                            n_val_sample=n_val,
+                                            filter_threshold=filter_th,
+                                            batch_size=batch_size,
+                                            window_size=window_size)
+                                        with open('Output.log', 'a') as \
+                                                out_f:
+                                            print('\nDate:'
+                                                  + str(datetime.date.today())
+                                                  + '\nConfiguration: '
+                                                  + key + '\n'
+                                                  + conf_name + '\nEpochs: '
+                                                  + str(result[1])
+                                                  + '\nTime: '
+                                                  + str(result[2])
+                                                  + '\nFinal Status: '
+                                                  + result[3]
+                                                  + '\nWidow time in sec: '
+                                                  + str(window_time)
+                                                  + '\nNumber of training '
+                                                  + 'samples: '
+                                                  + str(n_train)
+                                                  + '\nNumber of model '
+                                                  + 'parameters: '
+                                                  + str(model.count_params())
+                                                  + '\nModel-ID: '
+                                                  + str(mod_id)
+                                                  + '\nTRAIN RESULTS'
+                                                  + '\n  Percentage of '
+                                                  + _DETECTION_PROBLEM
+                                                  + ' samples: '
+                                                  + str(percent_pos_train)
+                                                  + '\n  Train acc: '
+                                                  + str(result[0][0])
+                                                  + '\n  Train precision: '
+                                                  + str(result[0][1])
+                                                  + '\n  Train recall: '
+                                                  + str(result[0][2])
+                                                  + '\nVALIDATION RESULTS'
+                                                  + '\n  Percentage of '
+                                                  + _DETECTION_PROBLEM
+                                                  + ' samples: '
+                                                  + str(percent_pos_train)
+                                                  + '\n  Validation acc: '
+                                                  + str(result[0][3])
+                                                  + '\n  Validation '
+                                                  + 'precision: '
+                                                  + str(result[0][4])
+                                                  + '\n  Validation recall: '
+                                                  + str(result[0][5]),
+                                                  file=out_f)
+                                            mod_id += 1
+                                            save_model(model,
+                                                       'model_' + str(mod_id))
 
     print('END')
 
