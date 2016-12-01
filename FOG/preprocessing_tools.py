@@ -7,19 +7,16 @@ import numpy as np
 import pandas as pd
 import random as rd
 
-from collections import Counter
-
-from FOG.io_functions import get_dataset
 from FOG.io_functions import get_std_mean
 from FOG.io_functions import get_patient_data_files
 from FOG.utils import substract_mean
-from FOG.definitions import get_patient_groups
-from FOG.definitions import get_patient
-from FOG.definitions import get_rotate_range
+from FOG.definitions import _get_patient_partitions
+from FOG.definitions import _get_patient
+from FOG.experiment_conf import _get_rotate_range
 
 
 _GLOBAL_STD = get_std_mean()[0]
-_ROT_RANGE = get_rotate_range()
+_ROT_RANGE = _get_rotate_range()
 
 
 def generate_arrays_from_file(path_list, window_size=200,
@@ -127,46 +124,20 @@ def generate_arrays_from_file(path_list, window_size=200,
         # break
 
 
-def check_orig(y_orig_raw):
-    """"""
-    return Counter(y_orig_raw)
+# def parse_y_orig(y_orig_raw):
+#     """"""
+#     return Counter(y_orig_raw)
 
 
-def split_data(patient_list=get_patient(), part=[0.7, 0.15, 0.15],
-               random_=False):
-    """Split batches between train, validation and test
-    
-    Parameter
-    ---------
-    path_list : str array-like
-    part : float array-like, optional, default: [0.7, 0.15, 0.15]
-        Percent of the overall data set corresponding to train,
-        validation and test partitions, respectively.
-    random_ : bool
-        Indicates if the test patients should be random, due to
-        reproducibility.
+def split_patient():
+    """Split patients between train, validation and test groups
         
     Return
     ------
-    test_patient, train_patient : str array-like
+    train_patient, val_patient, test_patient : str array-like
     
     """
-
-    if random_:
-        n_val = int(np.round(len(patient_list) * part[1]))
-        n_test = int(np.round(len(patient_list) * part[2]))
-        if n_val == 0 and part[1] > 0:
-            n_val = 1
-        if n_test == 0 and part[2] > 0:
-            n_test = 1
-        rd.shuffle(patient_list)
-        test_patient = patient_list[:n_test]
-        val_patient = patient_list[n_test:(n_val + n_test)]
-        train_patient = patient_list[(n_val + n_test):]
-    else:
-        [train_patient, val_patient, test_patient] \
-            = get_patient_groups()
-    return [train_patient, val_patient, test_patient]
+    return _get_patient_partitions()
 
 
 def preprocess_data(X, rotation=np.identity(3)):
@@ -175,19 +146,19 @@ def preprocess_data(X, rotation=np.identity(3)):
     Parameters
     ----------
     X : array-like, shape=[n_sample, n_features]
+    rotation : square-matrix
     """
-    X /= _DATA_STD
+    X /= _GLOBAL_STD
     X = np.concatenate((
         np.dot(rotation, np.asarray(X[:, :3]).T).T,
         substract_mean(np.dot(rotation, np.asarray(X[:, 3:6]).T).T),
         np.dot(rotation, np.asarray(X[:, 6:]).T).T), axis=1)
-    
     return X
 
 
-def extract_original_labels(X):
+def split_data(X):
     """"""
-    return [X[:, :-1], np.asarray(X[:, -1])]
+    return [np.asarray(X[:, :-2]), np.asarray(X[:, -2:])]
 
 
 def check_label(Y, filter_threshold=0.0):
@@ -198,24 +169,6 @@ def check_label(Y, filter_threshold=0.0):
         if (sum(Y == y_label) / Y.shape[0]) < filter_threshold:
             y_label = -1
     return y_label
-
-
-def generate_dataset(part=[0.7, 0.15, 0.15]):
-    """Generate dataset with partitions
-    
-    Parameters
-    ----------
-    test : float, optional, default: 0.20
-        Percent of the overall data set corresponding to test data.
-    
-    Return
-    ------
-    test_patient, train_patient : str array-like
-    
-    """
-    
-    patient_list = get_all_patient()
-    return split_data(patient_list, part=part, random_=False)
     
 
 def std_mean(seq):
@@ -260,8 +213,8 @@ def random_rot(range=_ROT_RANGE):
     return R
 
 
-def get_train_validation_path(train_patient,
-                              validation_patient=None, problem='fog'):
+def get_train_validation_path(train_patient, problem,
+                              validation_patient=None):
     """"""
     train_file = [file for patient in train_patient for file in
                   get_patient_data_files(patient, problem=problem)]
@@ -311,12 +264,8 @@ if __name__ == '__main__':
     if reproducibility:
         np.random.seed(seed)
         rd.seed(seed)
-    patient_list = _PATIENT_LIST
-    train_data = [patient for patient in patient_list
-                  if (patient not in _VAL_PATIENT_DEFAULT
-                      and patient not in _TEST_PATIENT_DEFAULT)]
-    val_data = _VAL_PATIENT_DEFAULT
-    test_data = _TEST_PATIENT_DEFAULT
+    [train_data, val_data, test_data] = split_patient()
+
     model = AuxModel()
     train_file = [file for patient in train_data for file in
                   get_patient_data_files(patient,

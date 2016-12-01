@@ -13,18 +13,21 @@ from keras.layers.convolutional import MaxPooling1D
 from keras.regularizers import l1, l2
 import keras.backend as K
 
+from FOG.experiment_conf import _get_n_feature
+
 
 def mean_pred(y_true, y_pred):
     """"""
     return K.mean(y_pred)
 
 
-def build_model(window_size, n_feature=9, n_conv=1, n_dense=1,
+def build_model(window_size, n_conv=1, n_dense=1,
                 k_shapes=[[32, 3]], dense_shape=[128],
                 init='uniform', opt_name='adadelta',
                 pooling=False, dropout=0.5, atrous=False,
                 regularizer=None):
     """Build the model"""
+    n_feature = _get_n_feature()
     if regularizer is None:
         regular = None
     else:

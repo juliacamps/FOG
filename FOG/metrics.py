@@ -5,13 +5,16 @@
 
 import numpy as np
 
-from FOG.preprocessing_tools import check_orig
-from FOG.definitions import get_activity_class
-from FOG.definitions import get_existing_metric
-from FOG.definitions import get_metric_init
+from collections import Counter
+
+from FOG.definitions import _get_activity_class
+from FOG.definitions import get_metric_to_calculate_key
+from FOG.definitions import get_conf_mat_key
+from FOG.definitions import _get_metric_init
+from FOG.definitions import _get_existing_metric
 
 
-def metrics_calc(conf_mat, metrics=get_existing_metric()):
+def metrics_calc(conf_mat, metrics=get_metric_to_calculate_key()):
     """"""
     TP = conf_mat[0, 0]
     FN = conf_mat[0, 1]
@@ -39,8 +42,8 @@ def metrics_calc(conf_mat, metrics=get_existing_metric()):
 
 def get_statistics(model_, generator, samples_count, batch_size, msg):
     """"""
-    existing_class = get_activity_class()
-    existing_metric = get_existing_metric()
+    existing_class = _get_activity_class()
+    existing_metric = _get_existing_metric()
     confusion_mat = np.zeros((2, 2))
     status = 'OK'
     end_epoch = False
@@ -50,7 +53,7 @@ def get_statistics(model_, generator, samples_count, batch_size, msg):
         partial_statistic[activity_class] = {}
         for metric in existing_metric:
             partial_statistic[activity_class][metric] = \
-                get_metric_init(metric)
+                _get_metric_init(metric)
     
     for X, y_true, y_origs in generator:
         try:
@@ -63,7 +66,7 @@ def get_statistics(model_, generator, samples_count, batch_size, msg):
                 y_true, y_pred, y_origs)
             confusion_mat += conf_mat
             for class_key, class_conf_mat in class_statistic.items():
-                partial_statistic[class_key]['conf_mat'] \
+                partial_statistic[class_key][get_conf_mat_key()] \
                     += class_conf_mat
             samples_it += batch_size
         
@@ -72,7 +75,7 @@ def get_statistics(model_, generator, samples_count, batch_size, msg):
             break
     
     for activity_class in existing_class:
-        conf_mat = partial_statistic[activity_class]['conf_mat']
+        conf_mat = partial_statistic[activity_class][get_conf_mat_key()]
         metrics = metrics_calc(conf_mat, metrics=existing_metric)
         for metric_name, metric_value in metrics.items():
             partial_statistic[activity_class][metric_name] \
@@ -84,7 +87,7 @@ def statistics_matrixes(y_true, y_pred, y_origs):
     """"""
     y_origs_counter = []
     for y_orig in y_origs:
-        y_origs_counter.append(check_orig(y_orig))
+        y_origs_counter.append(Counter(y_orig))
         
     conf_mat = np.zeros((2, 2))
     statistic_mat = {}
@@ -117,5 +120,23 @@ def statistics_matrixes(y_true, y_pred, y_origs):
                         statistic_mat[k] = np.zeros((2, 2))
                     statistic_mat[k][1, 0] += count
     return [conf_mat, statistic_mat]
+
+
+def record_metrics_result(conf_mat, verbose=False):
+    """"""
+    metric_key = get_metric_to_calculate_key()
+    metics = metrics_calc(
+        conf_mat, metrics=metric_key)
+    
+    if verbose:
+        print(metric_key[0] + ' :' + str(metics[metric_key[0]])
+              + '\n' + metric_key[1] + ' :'
+              + str(metics[metric_key[1]]) + '\n' + metric_key[2]
+              + ' :' + str(metics[metric_key[2]]))
+
+    return {get_conf_mat_key(): conf_mat,
+            metric_key[0]: metics[metric_key[0]],
+            metric_key[1]: metics[metric_key[1]],
+            metric_key[2]: metics[metric_key[2]]}
 
 # EOF
