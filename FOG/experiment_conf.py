@@ -19,6 +19,8 @@ _MAX_BATCH_SIZE = 128
 _SEED = 77
 _AUGMENT_SHIFT = 2
 _AUGMENT_ROTATE = 4
+# _AUGMENT_SHIFT = 1
+# _AUGMENT_ROTATE = 1
 _ROT_RANGE_ANGLES = [30, 45, 10]
 _FILTER_THRESHOLD = 0.5
 
@@ -29,10 +31,10 @@ _N_CONV_LAYER = [4]
 _N_DENSE_LAYER = [1]
 _KERNEL_SHAPE = [[32, 11], [32, 5], [64, 3], [64, 3]]
 _DENSE_SHAPE = [128]
-_DROPOUT = [0.25]  # , 0.5]
+_DROPOUT = [0.25, 0.5]  # , 0.5]
 _OPTIMIZATION = ['adadelta']
-_POOLING = [True]  # , False]
-_ATROUS = [True]  # , False]
+_POOLING = [True, False]  # , False]
+_ATROUS = [True, False]  # , False]
 _REGULARIZATION = [None]  # , 'l1', 'l2']
 
 # RUN SETTINGS
@@ -60,6 +62,24 @@ _DATA_PROPERTIES = {
         'percent_pos_val': 0.13,
         'percent_pos_test': 0.24
     }
+# 'Conf_2': {
+#         'window_time': 2,
+#         'n_train': 4544,
+#         'n_validation': 1088,
+#         'n_test': 3968,
+#         'percent_pos_train': 0.16,
+#         'percent_pos_val': 0.17,
+#         'percent_pos_test': 0.24
+#     },
+#     'Conf_3': {
+#         'window_time': 3,
+#         'n_train': 2912,
+#         'n_validation': 704,
+#         'n_test': 2560,
+#         'percent_pos_train': 0.16,
+#         'percent_pos_val': 0.17,
+#         'percent_pos_test': 0.24
+#     }
 }
 
 

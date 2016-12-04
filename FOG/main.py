@@ -10,7 +10,7 @@ from collections import OrderedDict
 from FOG.definitions import init_settings
 from FOG.definitions import define_settings
 from FOG.definitions import get_new_model_name
-from FOG.definitions import get_models_paths
+from FOG.definitions import get_model_names
 from FOG.definitions import check_status
 
 from FOG.utils import get_date
@@ -37,7 +37,7 @@ _GENERATE_SUMMARY = True
 _TRAIN_MODEL = True
 _TEST_MODEL = False
 _REPRODUCIBILITY = True
-_N_EPOCH = 2  # x2
+_N_EPOCH = 200  # x2
 _TEMPORAL_STRATEGY = False
 _SEED = get_seed_for_random()
 
@@ -105,7 +105,7 @@ if __name__ == '__main__':
     if _GENERATE_SUMMARY:
         
         prediction = OrderedDict([])
-        for model_name in get_models_paths(_DETECTION_PROBLEM):
+        for model_name in get_model_names(_DETECTION_PROBLEM):
             warning_msg_header = ('WARNING: ' + model_name
                            + ' has been discarded from the '
                            + 'evaluation process, due to -> ')

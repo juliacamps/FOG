@@ -109,7 +109,7 @@ def single_train(model, train_generator, n_epoch, n_train,
                 is_error = False
                 samples_it += batch_size
             # End loop only condition
-            if not (check_status(status) or
+            if (not check_status(status) or
                     (samples_it + batch_size) > n_train):
                 break
             
@@ -189,10 +189,10 @@ def predict_single_result(model, train_generator, batch_size, n_train,
             (get_prediction_global_key(), train_metrics),
             (get_prediction_partial_key(), train_statistic)])
 
-        msg = ('Train metrics:\n'
-               + to_string(prediction['train'][
-                               get_prediction_global_key()]))
-        report_event(msg, is_run_log=True)
+        # msg = ('Train metrics:\n'
+        #        + to_string(prediction['train'][
+        #                        get_prediction_global_key()]))
+        # report_event(msg, is_run_log=True)
 
         if validation_generator is None or n_validation is None:
             report_event('WARNING: No validation generator or '
@@ -208,10 +208,10 @@ def predict_single_result(model, train_generator, batch_size, n_train,
                 prediction['validation'] = OrderedDict([
                     (get_prediction_global_key(), val_metrics),
                     (get_prediction_partial_key(), val_statistic)])
-                msg = ('Validation metrics:\n'
-                       + to_string(prediction['validation'][
-                                       get_prediction_global_key()]))
-                report_event(msg, is_run_log=True)
+                # msg = ('Validation metrics:\n'
+                #        + to_string(prediction['validation'][
+                #                        get_prediction_global_key()]))
+                # report_event(msg, is_run_log=True)
             else:
                 msg = ('ERROR: Aborted prediction for Validation '
                        + 'data: ' + status)

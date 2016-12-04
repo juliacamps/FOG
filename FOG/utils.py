@@ -22,11 +22,11 @@ def is_numeric(string):
     return res
 
 
-def parse_value(content):
+def parse_value(content, force=False):
     """"""
-    if content.endswith('\n'):
+    if content.endswith('\n') or content.endswith('\r'):
         content = content[:-1]
-    if is_numeric(content):
+    if is_numeric(content) or force:
         content = float(content)
     return content
 

@@ -21,6 +21,7 @@ from FOG.io_functions import report_event
 from FOG.definitions import define_settings
 from FOG.definitions import get_inter_delimiter
 from FOG.utils import split_data
+from FOG.utils import parse_value
 
 
 def generate_batches(data_structure, window_size, batch_size,
@@ -65,39 +66,55 @@ def generate_batches(data_structure, window_size, batch_size,
                             batch_Y = []
                             batch_Y_orig = []
                             batch_it = 0
-                        for data in pd.read_csv(
-                                file_path, delimiter=get_inter_delimiter(),
-                         dtype=float, chunksize=window_size,
-                                na_filter=False, skiprows=shift,
-                         header=None):
-                            X, y, y_orig = split_data(data.as_matrix())
-                            y, valid = check_label(y, threshold)
-                            if valid and window_size == X.shape[0]:
-                                X = preprocess_data(X, global_std,
-                                                    rotate_mat)
-                                batch_X.append(X)
-                                batch_Y.append(y)
-                                batch_Y_orig.append(y_orig)
-                                batch_it += 1
-                                if batch_it == batch_size:
-                                    yield ((np.asarray(batch_X),
-                                           np.asarray(batch_Y),
-                                           np.asarray(batch_Y_orig)),
-                                           {'patient': patient_name,
-                                            'file': file_path})
-                                    y_cum += sum(np.asarray(batch_Y))
-                                    batch_count += 1
+                        # for data in pd.read_csv(
+                        #         open(file_path, 'rU'),
+                        #         encoding='utf-8', engine='c',
+                        #         delim_whitespace=True,
+                        #         dtype=float, chunksize=window_size,
+                        #         na_filter=False, skiprows=shift,
+                        #         header=None):
+                        # print(file_path)
+                        with open(file_path, 'r') as file:
+                            for X, y, y_orig in read_window(file, window_size):
+                                # print(type(X))
+                                # print(X)
+                                # print(type(y))
+                                # print(y)
+                                # print(type(y_orig))
+                                # print(y_orig)
+                                # # exit(1)
+                                # # X, y, y_orig = split_data(data)
+                                # print(y)
+                                # print(type(y))
+                                # print(y.shape)
+                                # print(type(y[0]))
+                                y, valid = check_label(y, threshold)
+                                if valid and window_size == X.shape[0]:
+                                    X = preprocess_data(X, global_std,
+                                                        rotate_mat)
+                                    batch_X.append(X)
+                                    batch_Y.append(y)
+                                    batch_Y_orig.append(y_orig)
+                                    batch_it += 1
+                                    if batch_it == batch_size:
+                                        yield ([np.asarray(batch_X),
+                                               np.asarray(batch_Y),
+                                               np.asarray(batch_Y_orig)],
+                                               {'patient': patient_name,
+                                                'file': file_path})
+                                        y_cum += sum(np.asarray(batch_Y))
+                                        batch_count += 1
+                                        batch_X = []
+                                        batch_Y = []
+                                        batch_Y_orig = []
+                                        batch_it = 0
+                                elif temporal:
+                                    batch_it = 0
                                     batch_X = []
                                     batch_Y = []
                                     batch_Y_orig = []
-                                    batch_it = 0
-                            elif temporal:
-                                batch_it = 0
-                                batch_X = []
-                                batch_Y = []
-                                batch_Y_orig = []
-                                # model_.reset_states()
-            
+                                    # model_.reset_states()
+                
             # model_.reset_states()
     #     n_samples = batch_count * batch_size
     #     # print('Total number of samples in all data: ')
@@ -113,6 +130,30 @@ def generate_batches(data_structure, window_size, batch_size,
     #     #       + str(discarded))
     #     break
     # return 1
+
+
+def read_window(file_object, window_size):
+    """Lazy function (generator) to read a file piece by piece.
+    Default chunk size: 1k."""
+    counter = 0
+    data = []
+    while 1:
+        line = file_object.readline()
+        if not line:
+            break
+        data.append(parse_line(line))
+        counter += 1
+        if counter == window_size:
+            yield split_data(np.asarray(data))
+            counter = 0
+            data = []
+
+
+def parse_line(line):
+    """"""
+    return [parse_value(line_part, force=True) for line_part in
+            line.split(
+        get_inter_delimiter())]
 
 
 def parse_y_orig(y_orig_raw):

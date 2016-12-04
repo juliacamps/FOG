@@ -52,6 +52,8 @@ _CORRECT_PATIENTS = ['fsl11', 'fsl13', 'fsl14', 'fsl15', 'fsl17',
                      'tek04', 'tek07', 'tek12', 'tek23', 'tek24',
                      'tek25'
                      ]
+# _CORRECT_PATIENTS = ['mac12', 'fsl13', 'fsl20', 'fsl11'
+#                      ]
 _PATIENT_LIST = ['nui16', 'tek07', 'mac03', 'tek04', 'tek24',
                  'mac17', 'mac21', 'tek25', 'mac04', 'mac07',
                  'tek12', 'fsl11', 'mac12', 'mac19', 'tek23',
@@ -60,7 +62,9 @@ _PATIENT_LIST = ['nui16', 'tek07', 'mac03', 'tek04', 'tek24',
                  'nui14', 'nui06', 'mac20', 'nui01'
                  ]
 _TEST_PATIENT_DEFAULT = ['mac20', 'tek12', 'fsl13']
+# _TEST_PATIENT_DEFAULT = ['fsl11']
 _VAL_PATIENT_DEFAULT = ['fsl18', 'mac10', 'tek24', 'nui13', 'tek23']
+# _VAL_PATIENT_DEFAULT = ['fsl20', 'fsl13']
 _ACTIVITY_CLASS_KEY = [0, 3, 5, 6, 7, 8, 11, 12, 13, 20, 22, 23, 28,
                        29, 30, 31, 32]
 # METRICS BEING CONSIDERED
@@ -468,12 +472,11 @@ def get_model_path(model_name, models_path=None):
     return join(models_path, model_name)
 
 
-def get_models_paths(problem, models_path=None):
+def get_model_names(problem, models_path=None):
     """"""
     if models_path is None:
         models_path = _get_models_path()
-    return [get_model_path(model_name=model_name,
-                           models_path=models_path) for model_name
+    return [model_name for model_name
             in listdir(models_path) if model_name.startswith(
             get_prefix(problem=problem, is_model=True))]
 
