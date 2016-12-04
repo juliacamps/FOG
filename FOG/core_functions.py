@@ -3,30 +3,27 @@
 # Authors: Julia Camps <julia.camps.sereix@est.fib.upc.edu>
 # Created on: 30/11/2016 09:26
 
-import numpy as np
-import random as rd
 import time
+from collections import OrderedDict
 
-from FOG.preprocessing_tools import generate_arrays_from_file
+
 from FOG.preprocessing_tools import get_generator
-from FOG.utils import calc_batch_size
-from FOG.io_functions import save_model
-from FOG.io_functions import load_model
-from FOG.io_functions import get_next_id
-from FOG.io_functions import record_settings_results
-from FOG.models import build_model
 from FOG.metrics import get_statistics
 from FOG.metrics import metrics_calc
-from FOG.metrics import record_metrics_result
-from FOG.definitions import _get_prediction_global_key
-from FOG.definitions import _get_prediction_partial_key
-from FOG.experiment_conf import _get_rotate_augment
-from FOG.experiment_conf import _get_shift_augment
+
+from FOG.io_functions import report_event
+from FOG.definitions import get_status_ini
+from FOG.definitions import check_status
+from FOG.definitions import get_prediction_partial_key
+from FOG.definitions import get_prediction_global_key
+from FOG.definitions import define_settings
+from FOG.utils import to_string
+from FOG.definitions import get_prediction_summary
 
 
-def train_model(model, train_patient, problem, n_epoch, n_train,
-                batch_size, window_size, validation_patient=None,
-                n_val=0, filter_threshold=0.0):
+def train_model(model, train_patient, n_epoch, n_train,
+                batch_size, window_size, temporal_dependency, problem,
+                validation_patient=None, n_validation=0, settings=None):
     """Train model on the selected patients
 
     Parameters
@@ -49,149 +46,182 @@ def train_model(model, train_patient, problem, n_epoch, n_train,
         training process.
 
     """
-    train_file =
-    [train_file, validation_file] = get_train_validation_path(
-        train_patient, validation_patient, problem=problem)
-    
-    train_generator = generate_arrays_from_file(
-        train_file, window_size, batch_size=batch_size,
-        augment_count=[_get_shift_augment(), _get_rotate_augment()],
-        filter_threshold=filter_threshold)
-    
-    if validation_file is not None:
-        validation_generator = generate_arrays_from_file(
-            validation_file, window_size, batch_size=batch_size,
-            filter_threshold=filter_threshold)
+
+    train_generator, validation_generator, settings = get_generator(
+        train_patient, window_size, batch_size,
+        temporal_dependency, problem,
+        validation_patient=validation_patient, settings=settings)
+
+    [status, trained_model, train_summary, settings] = single_train(
+        model, train_generator, n_epoch, n_train, batch_size,
+        validation_generator=validation_generator,
+        n_validation=n_validation,
+        temporal=temporal_dependency, settings=settings)
+    if check_status(status):
+        msg = 'OK: Training process finished successfully'
+        is_error = False
     else:
-        validation_generator = None
+        msg = 'ERROR: Training process FAILED: ' + str(status)
+        is_error = True
+    report_event(msg, is_error=is_error)
     
-    [trained_model, result] = single_train(
-        model, train_generator,
-        validation_generator=validation_generator, n_epoch=n_epoch,
-        n_train=n_train, n_val=n_val, batch_size=batch_size)
-    
-    return [trained_model, result]
+    if settings is not None:
+        settings = define_settings(settings, final_status=status)
+
+    return [trained_model, train_summary, settings]
 
 
-def single_train(model, train_generator, validation_generator=None,
-                 n_epoch=1, n_train=0,
-                 n_val=0, batch_size=64):
+def single_train(model, train_generator, n_epoch, n_train,
+                 batch_size, temporal, validation_generator=None,
+                 n_validation=0, settings=None):
     """Train the model
 
 
     """
-    
-    acc = 0
-    time_count = time.clock()
-    epochs = 0
-    status = 'OK'
-    statistics_record = []
-    
-    abort_train = False
+    if temporal:
+        # TODO control temporal case
+        print('IS TEMPORAL!!')
+    summary = None
+    time_ini = time.clock()
+    status = get_status_ini()
+    train_evolution = []
+    is_error = False
     for epoch_it in range(n_epoch):
-        print('\n==================\nSTARTING EPOCH: ' + str(epoch_it)
-              + '\n========================')
-        end_epoch = False
-        samples_epoch_count = 0
-        # Notice that the following would be an endless loop
-        # without the counter exit condition
-        for X, y, y_orig in train_generator:
+        msg = ('\n==================\nSTARTING EPOCH: '
+               + str(epoch_it) + '\n========================')
+        report_event(msg, is_run_log=True)
+        samples_it = 0
+        for [X, y, y_orig], additional_info in train_generator:
+            current_patinet = additional_info['patient']
+            current_file = additional_info['file']
             try:
                 model.train_on_batch(X, y)
             except Exception as e:
-                status = ('ERROR: While training the model: '
-                          + str(repr(e)))
-                end_epoch = True
-                abort_train = True
+                status = str(repr(e))
+                msg = ('ERROR:  Train failed for epoch '
+                         + str(epoch_it) + ' during patient: '
+                         + current_patinet + ', and file: '
+                         + current_file + ', and status: ' + status)
+                is_error = True
             else:
-                samples_epoch_count += batch_size
-            
-            if (samples_epoch_count + 1) >= n_train:
-                end_epoch = True
-            
-            if end_epoch:
-                # End loop condition (only condition)
+                msg = ('OK: Train successful for epoch '
+                         + str(epoch_it))
+                is_error = False
+                samples_it += batch_size
+            # End loop only condition
+            if not (check_status(status) or
+                    (samples_it + batch_size) > n_train):
                 break
-        if status == 'OK':
-            [status, prediction] = predict_single_result(
-                model, train_generator,
+            
+        report_event(msg, is_error=is_error)
+        report_event('==================\nENDED EPOCH: ' + str(
+            epoch_it) + '\n========================',
+                     is_run_log=True)
+                
+        if check_status(status):
+            [status, prediction, summary] = predict_single_result(
+                model, train_generator, batch_size,
                 validation_generator=validation_generator,
-                n_train=n_train, n_val=n_val,
-                batch_size=batch_size, verbose=True)
-            if status != 'OK':
-                abort_train = True
+                n_train=n_train, n_validation=n_validation)
+            if check_status(status):
+                train_evolution.append(['Epoch ' + str(epoch_it),
+                                        prediction])
+                msg = ('Prediction results:\n' + to_string(summary))
+                is_run_log = True
+                is_error = False
             else:
-                statistics_record.append(prediction)
-            epochs += 1
-        print('==================\nENDED EPOCH: ' + str(epoch_it)
-              + '\n========================')
-    
-    if not abort_train:
-        print('TRAINING FINISHED WITH VALIDATION ACC: ' + str(acc))
+                msg = ('ERROR: Prediction failed at epoch '
+                       + str(epoch_it) + ': ' + status)
+                is_run_log = False
+                is_error = True
+            report_event(msg, is_run_log=is_run_log,
+                         is_error=is_error)
+            
+    if check_status(status):
+        msg = ('OK: Train finished successfully at epoch '
+               + str(epoch_it))
+        is_error = False
     else:
-        print('TRAINING WAS ABORTED')
+        msg = ('ERROR: Aborting train at epoch ' + str(epoch_it)
+               + ', something has failed: ' + status)
+        is_error = True
+    report_event(msg, is_error=is_error)
     
-    return [model, [epochs, (time.clock() - time_count), status,
-                    statistics_record]]
+    if settings is not None:
+        settings = define_settings(settings, training_time=(
+            time.clock() - time_ini), new_settings_dict=summary)
+    
+    return [status, model, train_evolution, settings]
 
 
-def predict_result(
-        model, train_patient, validation_patient, problem, n_train,
-        n_val, threshold, batch_size, augment_shift, window_size,
-        augment_rotate, normalize):
+def predict_result(model, train_patient, window_size, batch_size,
+                   temporal, problem, n_train, threshold,
+                   augment_shift, augment_rotate,
+                   validation_patient=None, n_validation=None):
     """"""
-    [train_generator, validation_generator] = get_generator(
-        train_patient, validation_patient=validation_patient,
-        problem=problem, augment_shift=augment_shift,
-        augment_rotate=augment_rotate, threshold=threshold,
-        normalize=normalize, window_size=window_size,
-        batch_size=batch_size)
+
+    train_generator, validation_generator = get_generator(
+        train_patient, window_size, batch_size, temporal,
+        problem, validation_patient=validation_patient,
+        shift_augmentation=augment_shift,
+        rotate_augmentation=augment_rotate, threshold=threshold)
     
     return predict_single_result(
         model, train_generator,
         validation_generator=validation_generator, n_train=n_train,
-        n_val=n_val, batch_size=batch_size, verbose=True)
+        n_validation=n_validation, batch_size=batch_size)
 
 
-def predict_single_result(model, train_generator,
-                          validation_generator=None, n_train=0,
-                          n_val=0, batch_size=64, verbose=False):
+def predict_single_result(model, train_generator, batch_size, n_train,
+                          validation_generator=None, n_validation=None):
     """"""
-    result = {}
+    train_metrics = None
+    val_metrics = None
+    prediction = OrderedDict([])
     [status, train_conf_mat, train_statistic] = \
-        get_statistics(model, train_generator, n_train, batch_size,
-                       msg='train_error_reproduction')
-    if status == 'OK':
-        if verbose:
-            print('train prediction:')
-            
-        result['train'] = {
-            _get_prediction_partial_key(): train_statistic,
-            _get_prediction_global_key(): record_metrics_result(
-                train_conf_mat, verbose=verbose)
-        }
+        get_statistics(model, train_generator, n_train, batch_size)
         
-        if validation_generator is not None:
+    if check_status(status):
+        msg = 'OK: Prediction successful for Train data'
+        report_event(msg)
+        train_metrics = metrics_calc(train_conf_mat)
+        prediction['train'] = OrderedDict([
+            (get_prediction_global_key(), train_metrics),
+            (get_prediction_partial_key(), train_statistic)])
+
+        msg = ('Train metrics:\n'
+               + to_string(prediction['train'][
+                               get_prediction_global_key()]))
+        report_event(msg, is_run_log=True)
+
+        if validation_generator is None or n_validation is None:
+            report_event('WARNING: No validation generator or '
+                         'counter')
+        else:
             [status, val_conf_mat, val_statistic] = \
                 get_statistics(model, validation_generator,
-                               n_val, batch_size,
-                               msg=
-                               'validation_error_reproduction')
-            if status == 'OK':
-                if verbose:
-                    print('validation prediction:')
-                    
-                result['validation'] = {
-                    _get_prediction_partial_key(): val_statistic,
-                    _get_prediction_global_key():
-                        record_metrics_result(val_conf_mat,
-                                              verbose=verbose)
-                    }
+                               n_validation, batch_size)
+            if check_status(status):
+                msg = 'OK: Prediction successful for Validation data'
+                report_event(msg)
+                val_metrics = metrics_calc(val_conf_mat)
+                prediction['validation'] = OrderedDict([
+                    (get_prediction_global_key(), val_metrics),
+                    (get_prediction_partial_key(), val_statistic)])
+                msg = ('Validation metrics:\n'
+                       + to_string(prediction['validation'][
+                                       get_prediction_global_key()]))
+                report_event(msg, is_run_log=True)
+            else:
+                msg = ('ERROR: Aborted prediction for Validation '
+                       + 'data: ' + status)
+                report_event(msg, is_error=True)
+    else:
+        msg = 'ERROR: Aborted prediction for Train data: ' + status
+        report_event(msg, is_error=True)
     
-    return [status, result]
+    return [status, prediction, get_prediction_summary(
+        train_metrics, val_metrics)]
 
-
-
-    
-    
 # EOF
+

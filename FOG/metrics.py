@@ -6,137 +6,126 @@
 import numpy as np
 
 from collections import Counter
+from collections import OrderedDict
 
-from FOG.definitions import _get_activity_class
-from FOG.definitions import get_metric_to_calculate_key
-from FOG.definitions import get_conf_mat_key
-from FOG.definitions import _get_metric_init
-from FOG.definitions import _get_existing_metric
+from FOG.definitions import parse_conf_mat
+from FOG.definitions import get_metric
+from FOG.definitions import get_activity_class
+
+from FOG.definitions import get_status_ini
+from FOG.definitions import label_is_positive
+from FOG.definitions import label_is_negative
 
 
-def metrics_calc(conf_mat, metrics=get_metric_to_calculate_key()):
+_METRICS = get_metric()
+
+
+def metrics_calc(conf_mat, metrics=None):
     """"""
-    TP = conf_mat[0, 0]
-    FN = conf_mat[0, 1]
-    FP = conf_mat[1, 0]
-    TN = conf_mat[1, 1]
-    result_metrics = {}
-    if 'accuracy' in metrics:
-        if TP > 0 or TN > 0:
-            result_metrics['accuracy'] = (TP + TN) / (TP + FN + FP
-                                                      + TN)
-        else:
-            result_metrics['accuracy'] = 0
-    if 'sensitivity' in metrics:
-        if TP > 0:
-            result_metrics['sensitivity'] = TP / (TP + FN)
-        else:
-            result_metrics['sensitivity'] = 0
-    if 'specificity' in metrics:
-        if TN > 0:
-            result_metrics['specificity'] = TN / (TN + FP)
-        else:
-            result_metrics['specificity'] = 0
+    if metrics is None:
+        metrics = _METRICS
+    result_metrics = OrderedDict([])
+    for metric in metrics:
+        result_metrics[metric] = _calc_metric(conf_mat, metric)
     return result_metrics
 
 
-def get_statistics(model_, generator, samples_count, batch_size, msg):
+def _calc_metric(conf_mat, metric_name):
     """"""
-    existing_class = _get_activity_class()
-    existing_metric = _get_existing_metric()
-    confusion_mat = np.zeros((2, 2))
-    status = 'OK'
+    metric_value = None
+    if metric_name.find('conf') > -1:
+        metric_value = conf_mat
+    else:
+        TP = conf_mat['TP']
+        FN = conf_mat['FN']
+        FP = conf_mat['FP']
+        TN = conf_mat['TN']
+        if metric_name.find('acc') > -1:
+            if TP > 0 or TN > 0:
+                metric_value = (TP + TN) / (TP + FN + FP + TN)
+        elif metric_name.find('sen') > -1:
+            if TP > 0:
+                metric_value = TP / (TP + FN)
+        elif metric_name.find('spe') > -1:
+            if TN > 0:
+                metric_value = TN / (TN + FP)
+    return metric_value
+
+
+def get_statistics(model, generator, samples_count, batch_size):
+    """"""
+    existing_class = get_activity_class()
+    raw_conf_mat_total = np.zeros((2, 2))
+    status = get_status_ini()
     end_epoch = False
     samples_it = 0
-    partial_statistic = {}
-    for activity_class in existing_class:
-        partial_statistic[activity_class] = {}
-        for metric in existing_metric:
-            partial_statistic[activity_class][metric] = \
-                _get_metric_init(metric)
+    raw_class_statistic = OrderedDict(
+        [(class_key, np.zeros((2, 2))) for class_key in
+         existing_class])
     
-    for X, y_true, y_origs in generator:
+    for [X, y_true, y_orig], additional_info in generator:
         try:
-            y_pred = model_.predict_on_batch(X)
+            y_pred = model.predict_on_batch(X)
         except Exception as e:
-            status = ('ERROR: While ' + msg + ': ' + str(repr(e)))
+            status = str(repr(e))
             end_epoch = True
         else:
-            [conf_mat, class_statistic] = statistics_matrixes(
-                y_true, y_pred, y_origs)
-            confusion_mat += conf_mat
-            for class_key, class_conf_mat in class_statistic.items():
-                partial_statistic[class_key][get_conf_mat_key()] \
-                    += class_conf_mat
+            [conf_mat, raw_class_statistic_part] \
+                = statistics_matrixes(y_true, y_pred, y_orig)
+            raw_conf_mat_total += conf_mat
+            for key, raw_class_conf_mat in \
+                    raw_class_statistic_part.items():
+                raw_class_statistic[key] += raw_class_conf_mat
             samples_it += batch_size
         
-        if end_epoch or samples_it >= samples_count:
+        if end_epoch or (samples_it + batch_size) > samples_count:
             # End loop condition (only condition)
             break
-    
-    for activity_class in existing_class:
-        conf_mat = partial_statistic[activity_class][get_conf_mat_key()]
-        metrics = metrics_calc(conf_mat, metrics=existing_metric)
-        for metric_name, metric_value in metrics.items():
-            partial_statistic[activity_class][metric_name] \
-                = metric_value
-    return [status, confusion_mat, partial_statistic]
-
-
-def statistics_matrixes(y_true, y_pred, y_origs):
-    """"""
-    y_origs_counter = []
-    for y_orig in y_origs:
-        y_origs_counter.append(Counter(y_orig))
         
-    conf_mat = np.zeros((2, 2))
-    statistic_mat = {}
-    for i in range(np.asarray(y_true).shape[0]):
-        y_orig_counter = y_origs_counter[i]
-        if int(y_true[i]) == 1:
-            if int(y_true[i]) == int(np.round(y_pred[i])):
-                conf_mat[0, 0] += 1
-                for k, count in y_orig_counter.items():
-                    if k not in statistic_mat:
-                        statistic_mat[k] = np.zeros((2, 2))
-                    statistic_mat[k][0, 0] += count
-            else:
-                conf_mat[0, 1] += 1
-                for k, count in y_orig_counter.items():
-                    if k not in statistic_mat:
-                        statistic_mat[k] = np.zeros((2, 2))
-                    statistic_mat[k][0, 1] += count
-        else:
-            if int(y_true[i]) == int(np.round(y_pred[i])):
-                conf_mat[1, 1] += 1
-                for key, count in y_orig_counter.items():
-                    if key not in statistic_mat:
-                        statistic_mat[key] = np.zeros((2, 2))
-                    statistic_mat[key][1, 1] += count
-            else:
-                conf_mat[1, 0] += 1
-                for k, count in y_orig_counter.items():
-                    if k not in statistic_mat:
-                        statistic_mat[k] = np.zeros((2, 2))
-                    statistic_mat[k][1, 0] += count
-    return [conf_mat, statistic_mat]
+    return [status, parse_conf_mat(raw_conf_mat_total),
+            OrderedDict([(class_key, parse_conf_mat(
+                raw_class_conf_mat))
+                         for class_key, raw_class_conf_mat in
+                         raw_class_statistic.items()])]
 
 
-def record_metrics_result(conf_mat, verbose=False):
+def statistics_matrixes(y_true, y_pred, y_orig):
     """"""
-    metric_key = get_metric_to_calculate_key()
-    metics = metrics_calc(
-        conf_mat, metrics=metric_key)
-    
-    if verbose:
-        print(metric_key[0] + ' :' + str(metics[metric_key[0]])
-              + '\n' + metric_key[1] + ' :'
-              + str(metics[metric_key[1]]) + '\n' + metric_key[2]
-              + ' :' + str(metics[metric_key[2]]))
+    y_orig_counter = []
+    for y_orig_part in y_orig:
+        y_orig_counter.append(Counter(y_orig_part))
+        
+    raw_conf_mat = np.zeros((2, 2))
+    class_statistic = {}
+    for i in range(np.asarray(y_true).shape[0]):
+        y_orig_counter_part = y_orig_counter[i]
+        if label_is_positive(int(y_true[i])):
+            if int(y_true[i]) == int(np.round(y_pred[i])):
+                raw_conf_mat[0, 0] += 1
+                for key, count in y_orig_counter_part.items():
+                    if key not in class_statistic:
+                        class_statistic[key] = np.zeros((2, 2))
+                    class_statistic[key][0, 0] += count
+            else:
+                raw_conf_mat[0, 1] += 1
+                for key, count in y_orig_counter_part.items():
+                    if key not in class_statistic:
+                        class_statistic[key] = np.zeros((2, 2))
+                    class_statistic[key][0, 1] += count
+        elif label_is_negative(int(y_true[i])):
+            if int(y_true[i]) == int(np.round(y_pred[i])):
+                raw_conf_mat[1, 1] += 1
+                for key, count in y_orig_counter_part.items():
+                    if key not in class_statistic:
+                        class_statistic[key] = np.zeros((2, 2))
+                    class_statistic[key][1, 1] += count
+            else:
+                raw_conf_mat[1, 0] += 1
+                for key, count in y_orig_counter_part.items():
+                    if key not in class_statistic:
+                        class_statistic[key] = np.zeros((2, 2))
+                    class_statistic[key][1, 0] += count
+    return [raw_conf_mat, class_statistic]
 
-    return {get_conf_mat_key(): conf_mat,
-            metric_key[0]: metics[metric_key[0]],
-            metric_key[1]: metics[metric_key[1]],
-            metric_key[2]: metics[metric_key[2]]}
 
 # EOF

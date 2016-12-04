@@ -11,23 +11,15 @@ from keras.layers.convolutional import AtrousConvolution1D
 from keras.layers.convolutional import Convolution1D
 from keras.layers.convolutional import MaxPooling1D
 from keras.regularizers import l1, l2
-import keras.backend as K
 
-from FOG.experiment_conf import _get_n_feature
-
-
-def mean_pred(y_true, y_pred):
-    """"""
-    return K.mean(y_pred)
+from FOG.experiment_conf import get_n_feature
 
 
-def build_model(window_size, n_conv=1, n_dense=1,
-                k_shapes=[[32, 3]], dense_shape=[128],
-                init='uniform', opt_name='adadelta',
-                pooling=False, dropout=0.5, atrous=False,
-                regularizer=None):
+def build_model(window_size, n_conv, n_dense, k_shapes,
+                dense_shape, init, opt_name, pooling, dropout,
+                temporal_model, atrous=False, regularizer=None):
     """Build the model"""
-    n_feature = _get_n_feature()
+    n_feature = get_n_feature()
     if regularizer is None:
         regular = None
     else:
@@ -40,22 +32,23 @@ def build_model(window_size, n_conv=1, n_dense=1,
             print('ERROR: Regularizer is Undefined')
             regular = None
             
-    model_ = Sequential()
-    name = ''
+    model = Sequential()
+    model_structure = ''
     if n_conv > 0:
         nb_kernel = k_shapes[0][0]
         he_kernel = k_shapes[0][1]
         if atrous:
-            model_.add(Convolution1D(nb_kernel, he_kernel,
-                                 init=init,
-                                 W_regularizer=regular,
-                                 border_mode='same',
-                                 input_shape=(window_size, n_feature),
-                                 activation='relu'))
-            name += ('C(' + str(nb_kernel) + ',' + str(he_kernel)
-                     + ')-')
+            model.add(Convolution1D(nb_kernel, he_kernel,
+                                    init=init,
+                                    W_regularizer=regular,
+                                    border_mode='same',
+                                    input_shape=(window_size,
+                                               n_feature),
+                                    activation='relu'))
+            model_structure += ('C(' + str(nb_kernel) + ','
+                                + str(he_kernel) + ')-')
         else:
-            model_.add(AtrousConvolution1D(nb_kernel, he_kernel,
+            model.add(AtrousConvolution1D(nb_kernel, he_kernel,
                                        atrous_rate=2,
                                        init=init,
                                        W_regularizer=regular,
@@ -63,49 +56,52 @@ def build_model(window_size, n_conv=1, n_dense=1,
                                        input_shape=(window_size,
                                                     n_feature),
                                        activation='relu'))
-            name += ('A(' + str(nb_kernel) + ',' + str(he_kernel)
-                     + ')-')
+            model_structure += ('A(' + str(nb_kernel) + ','
+                                + str(he_kernel) + ')-')
         if pooling:
-            model_.add(MaxPooling1D(pool_length=2))
-            name += 'P-'
+            model.add(MaxPooling1D(pool_length=2))
+            model_structure += 'P-'
         if dropout > 0:
-            model_.add(Dropout(dropout))
-            name += 'DR(' + str(dropout) + ')-'
+            model.add(Dropout(dropout))
+            model_structure += 'DR(' + str(dropout) + ')-'
     for i in range(1, n_conv):
         nb_kernel = k_shapes[i][0]
         he_kernel = k_shapes[i][1]
-        model_.add(Convolution1D(nb_kernel, he_kernel, init=init,
+        model.add(Convolution1D(nb_kernel, he_kernel, init=init,
                                  W_regularizer=regular,
                                  border_mode='same',
                                  activation='relu'))
-        name += 'C(' + str(nb_kernel) + ',' + str(he_kernel) + ')-'
+        model_structure += ('C(' + str(nb_kernel) + ',' + str(
+            he_kernel) + ')-')
         if pooling:
-            model_.add(MaxPooling1D(pool_length=2))
-            name += 'P-'
+            model.add(MaxPooling1D(pool_length=2))
+            model_structure += 'P-'
         if dropout > 0:
-            model_.add(Dropout(dropout))
-            name += 'DR(' + str(dropout) + ')-'
-    model_.add(Flatten())
+            model.add(Dropout(dropout))
+            model_structure += 'DR(' + str(dropout) + ')-'
+    model.add(Flatten())
+    
+    # if temporal_model:
+    
     for i in range(n_dense):
-        model_.add(Dense(dense_shape[i], activation='relu',
+        model.add(Dense(dense_shape[i], activation='relu',
                          init=init, W_regularizer=regular))
-        name += 'DN(' + str(dense_shape[i]) + ')-'
+        model_structure += 'DN(' + str(dense_shape[i]) + ')-'
         
         if dropout > 0:
-            model_.add(Dropout(dropout))
-            name += 'D(' + str(dropout) + ')-'
+            model.add(Dropout(dropout))
+            model_structure += 'D(' + str(dropout) + ')-'
 
-    model_.add(Dense(1, activation='sigmoid',
+    model.add(Dense(1, activation='sigmoid',
                      W_regularizer=regular))
-    name += 'DN(1,Sigmoid)|INIT:' + init + '|REGULAR:' + str(regular)
+    model_structure += ('DN(1,Sigmoid)|INIT:' + init + '|REGULAR:'
+                        + str(regular))
     
-    model_.compile(loss='binary_crossentropy',
-                   optimizer=opt_name,
-                   metrics=[])  # 'accuracy', 'precision',
-                                # 'recall', mean_pred])
-    name += '|OPT:' + opt_name
+    model.compile(loss='binary_crossentropy',
+                  optimizer=opt_name, metrics=[])
+    model_structure += '|OPT:' + opt_name
     
-    return [name, model_]
+    return [model_structure, model]
 
 
 # EOF
