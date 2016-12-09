@@ -66,28 +66,10 @@ def generate_batches(data_structure, window_size, batch_size,
                             batch_Y = []
                             batch_Y_orig = []
                             batch_it = 0
-                        # for data in pd.read_csv(
-                        #         open(file_path, 'rU'),
-                        #         encoding='utf-8', engine='c',
-                        #         delim_whitespace=True,
-                        #         dtype=float, chunksize=window_size,
-                        #         na_filter=False, skiprows=shift,
-                        #         header=None):
-                        # print(file_path)
                         with open(file_path, 'r') as file:
-                            for X, y, y_orig in read_window(file, window_size):
-                                # print(type(X))
-                                # print(X)
-                                # print(type(y))
-                                # print(y)
-                                # print(type(y_orig))
-                                # print(y_orig)
-                                # # exit(1)
-                                # # X, y, y_orig = split_data(data)
-                                # print(y)
-                                # print(type(y))
-                                # print(y.shape)
-                                # print(type(y[0]))
+                            for X, y, y_orig in read_window(
+                                    file, window_size, shift):
+
                                 y, valid = check_label(y, threshold)
                                 if valid and window_size == X.shape[0]:
                                     X = preprocess_data(X, global_std,
@@ -132,11 +114,13 @@ def generate_batches(data_structure, window_size, batch_size,
     # return 1
 
 
-def read_window(file_object, window_size):
+def read_window(file_object, window_size, shift):
     """Lazy function (generator) to read a file piece by piece.
     Default chunk size: 1k."""
     counter = 0
     data = []
+    for i in range(shift):
+        file_object.readline()
     while 1:
         line = file_object.readline()
         if not line:

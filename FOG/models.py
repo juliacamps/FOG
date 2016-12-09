@@ -17,20 +17,18 @@ from FOG.experiment_conf import get_n_feature
 
 def build_model(window_size, n_conv, n_dense, k_shapes,
                 dense_shape, init, opt_name, pooling, dropout,
-                temporal_model, atrous=False, regularizer=None):
+                temporal_model, atrous, regularizer):
     """Build the model"""
     n_feature = get_n_feature()
-    if regularizer is None:
-        regular = None
+
+    if regularizer == 'l1':
+        regular = l1(l=0.01)
+    elif regularizer == 'l2':
+        regular = l2(l=0.01)
     else:
-        if regularizer == 'l1':
-            regular = l1(l=0.01)
-        elif regularizer == 'l2':
-            regular = l2(l=0.01)
-        else:
-            # Not accepted option
-            print('ERROR: Regularizer is Undefined')
-            regular = None
+        # Not accepted option
+        print('ERROR: Regularizer is Undefined')
+        regular = None
             
     model = Sequential()
     model_structure = ''
@@ -38,26 +36,27 @@ def build_model(window_size, n_conv, n_dense, k_shapes,
         nb_kernel = k_shapes[0][0]
         he_kernel = k_shapes[0][1]
         if atrous:
+            model.add(AtrousConvolution1D(nb_kernel, he_kernel,
+                                          atrous_rate=2,
+                                          init=init,
+                                          W_regularizer=regular,
+                                          border_mode='same',
+                                          input_shape=(window_size,
+                                                       n_feature),
+                                          activation='relu'))
+            model_structure += ('A(' + str(nb_kernel) + ','
+                                + str(he_kernel) + ')-')
+        else:
             model.add(Convolution1D(nb_kernel, he_kernel,
                                     init=init,
                                     W_regularizer=regular,
                                     border_mode='same',
                                     input_shape=(window_size,
-                                               n_feature),
+                                                 n_feature),
                                     activation='relu'))
             model_structure += ('C(' + str(nb_kernel) + ','
                                 + str(he_kernel) + ')-')
-        else:
-            model.add(AtrousConvolution1D(nb_kernel, he_kernel,
-                                       atrous_rate=2,
-                                       init=init,
-                                       W_regularizer=regular,
-                                       border_mode='same',
-                                       input_shape=(window_size,
-                                                    n_feature),
-                                       activation='relu'))
-            model_structure += ('A(' + str(nb_kernel) + ','
-                                + str(he_kernel) + ')-')
+            
         if pooling:
             model.add(MaxPooling1D(pool_length=2))
             model_structure += 'P-'

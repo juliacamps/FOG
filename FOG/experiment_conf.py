@@ -25,16 +25,17 @@ _ROT_RANGE_ANGLES = [30, 45, 10]
 _FILTER_THRESHOLD = 0.5
 
 # EXPERIMENT-CONFIGURATION PROPERTIES
-_INITIALIZATION = ['glorot_uniform', 'lecun_uniform', 'he_normal',
-                  'he_uniform', 'glorot_normal']
+# _INITIALIZATION = ['glorot_uniform', 'lecun_uniform', 'he_normal',
+#                   'he_uniform', 'glorot_normal']
+_INITIALIZATION = ['he_normal', 'glorot_normal']  # TODO CONF MODEL 6
 _N_CONV_LAYER = [4]
 _N_DENSE_LAYER = [1]
 _KERNEL_SHAPE = [[32, 11], [32, 5], [64, 3], [64, 3]]
 _DENSE_SHAPE = [128]
-_DROPOUT = [0.25, 0.5]  # , 0.5]
+_DROPOUT = [0.25]  # , 0.5]
 _OPTIMIZATION = ['adadelta']
-_POOLING = [True, False]  # , False]
-_ATROUS = [True, False]  # , False]
+_POOLING = [True]  # , False]
+_ATROUS = [False]  # , True]
 _REGULARIZATION = [None]  # , 'l1', 'l2']
 
 # RUN SETTINGS
@@ -44,15 +45,15 @@ _VERBOSE = True
 
 # DATA-CONFIGURATION PROPERTIES
 _DATA_PROPERTIES = {
-    'Conf_2': {
-        'window_time': 2,
-        'n_train': 186112,
-        'n_validation': 6400,
-        'n_test': 3968,
-        'percent_pos_train': 0.14,
-        'percent_pos_val': 0.13,
-        'percent_pos_test': 0.24
-    },
+    # 'Conf_2': {
+    #     'window_time': 2,
+    #     'n_train': 186112,
+    #     'n_validation': 6400,
+    #     'n_test': 3968,
+    #     'percent_pos_train': 0.14,
+    #     'percent_pos_val': 0.13,
+    #     'percent_pos_test': 0.24
+    # },
     'Conf_3': {
         'window_time': 3,
         'n_train': 122304,

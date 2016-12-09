@@ -68,9 +68,7 @@ if __name__ == '__main__':
                 n_epoch=_N_EPOCH, reproducibility=_REPRODUCIBILITY,
                 random_seed=_SEED, temporal=_TEMPORAL_STRATEGY)
             
-            msg = ('\n\n============= NEW EXPERIMENT ============='
-                   + '\nConfiguration:\n' + to_string(settings))
-            report_event(msg, is_run_log=True)
+            
             [model_structure, model] = build_model(
                 window_size=configuration['window_size'],
                 n_conv=configuration['n_conv'],
@@ -88,9 +86,9 @@ if __name__ == '__main__':
             settings = define_settings(
                 settings, model_conf=model_structure,
                 n_parameter=model.count_params())
-            
-            msg = ('STARTING TRAINING'
-                   + '\nModel structure: ' + str(model_structure))
+            msg = ('\n\n============= NEW EXPERIMENT ============='
+                   + '\nConfiguration:\n' + to_string(settings))
+            report_event(msg, is_run_log=True)
             
             model, train_summary, settings = train_model(
                 model, train_patient, _N_EPOCH, configuration[
