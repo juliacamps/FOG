@@ -37,8 +37,7 @@ _GENERATE_SUMMARY = True
 _TRAIN_MODEL = True
 _TEST_MODEL = False
 _REPRODUCIBILITY = True
-_N_EPOCH = 200  # x2
-_TEMPORAL_STRATEGY = False
+_N_EPOCH = 100
 _SEED = get_seed_for_random()
 
 
@@ -53,7 +52,7 @@ if __name__ == '__main__':
     [train_patient, val_patient, test_patient] = get_patient_split(
         _DETECTION_PROBLEM)
 
-    # Build model
+    # NEW MODEL CODE
     if _TRAIN_MODEL:
         for configuration in experiment_conf_generator():
             settings = init_settings()
@@ -66,8 +65,7 @@ if __name__ == '__main__':
                 date=day_date,
                 model_name=model_name, problem=_DETECTION_PROBLEM,
                 n_epoch=_N_EPOCH, reproducibility=_REPRODUCIBILITY,
-                random_seed=_SEED, temporal=_TEMPORAL_STRATEGY)
-            
+                random_seed=_SEED)
             
             [model_structure, model] = build_model(
                 window_size=configuration['window_size'],
@@ -81,7 +79,7 @@ if __name__ == '__main__':
                 init=configuration['weight_init'],
                 atrous=configuration['atrous'],
                 regularizer=configuration['regular'],
-                temporal_model=_TEMPORAL_STRATEGY)
+                temporal_model=configuration['temporal'])
             
             settings = define_settings(
                 settings, model_conf=model_structure,
@@ -93,15 +91,21 @@ if __name__ == '__main__':
             model, train_summary, settings = train_model(
                 model, train_patient, _N_EPOCH, configuration[
                     'n_train'], configuration['batch_size'],
-                configuration['window_size'], _TEMPORAL_STRATEGY,
+                configuration['window_size'],
+                configuration['temporal'],
                 _DETECTION_PROBLEM, validation_patient=val_patient,
                 n_validation=configuration['n_validation'],
                 settings=settings)
-            
+
             save_model(model, model_name, (settings, train_summary))
-                            
+
+            msg = ('============ RESULTS & SETTINGS ============'
+                   + '\nConfiguration:\n' + to_string(settings)
+                   + '\n============ END OF EXPERIMENT ============')
+            report_event(msg, is_run_log=True)
+                       
+    # SUMMARY GENERATION CODE
     if _GENERATE_SUMMARY:
-        
         prediction = OrderedDict([])
         for model_name in get_model_names(_DETECTION_PROBLEM):
             warning_msg_header = ('WARNING: ' + model_name

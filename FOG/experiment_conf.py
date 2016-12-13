@@ -14,29 +14,28 @@ from FOG.utils import calc_batch_size
 _N_CHANNEL = 1
 _N_FEATURE = 9
 _N_CLASS = 2
-_DATA_FREQ = 100
+_DATA_FREQ = 50
 _MAX_BATCH_SIZE = 128
 _SEED = 77
 _AUGMENT_SHIFT = 2
 _AUGMENT_ROTATE = 4
-# _AUGMENT_SHIFT = 1
-# _AUGMENT_ROTATE = 1
 _ROT_RANGE_ANGLES = [30, 45, 10]
 _FILTER_THRESHOLD = 0.5
 
 # EXPERIMENT-CONFIGURATION PROPERTIES
 # _INITIALIZATION = ['glorot_uniform', 'lecun_uniform', 'he_normal',
 #                   'he_uniform', 'glorot_normal']
-_INITIALIZATION = ['he_normal', 'glorot_normal']  # TODO CONF MODEL 6
+_INITIALIZATION = ['glorot_uniform']  # , 'glorot_normal']
 _N_CONV_LAYER = [4]
 _N_DENSE_LAYER = [1]
 _KERNEL_SHAPE = [[32, 11], [32, 5], [64, 3], [64, 3]]
 _DENSE_SHAPE = [128]
 _DROPOUT = [0.25]  # , 0.5]
-_OPTIMIZATION = ['adadelta']
-_POOLING = [True]  # , False]
+_OPTIMIZATION = ['adam']
+_POOLING = [False]  # , True]
 _ATROUS = [False]  # , True]
 _REGULARIZATION = [None]  # , 'l1', 'l2']
+_TEMPORAL_MODEL = [False, True]
 
 # RUN SETTINGS
 _LOG_MODE_ID = 0  # {0: 'verbose', 1: 'errors', 2: 'quiet'}
@@ -45,21 +44,12 @@ _VERBOSE = True
 
 # DATA-CONFIGURATION PROPERTIES
 _DATA_PROPERTIES = {
-    # 'Conf_2': {
-    #     'window_time': 2,
-    #     'n_train': 186112,
-    #     'n_validation': 6400,
-    #     'n_test': 3968,
-    #     'percent_pos_train': 0.14,
-    #     'percent_pos_val': 0.13,
-    #     'percent_pos_test': 0.24
-    # },
-    'Conf_3': {
-        'window_time': 3,
-        'n_train': 122304,
-        'n_validation': 4160,
-        'n_test': 2560,
-        'percent_pos_train': 0.15,
+    'Conf_2': {
+        'window_time': 2,
+        'n_train': 186240,
+        'n_validation': 6400,
+        'n_test': 3968,
+        'percent_pos_train': 0.14,
         'percent_pos_val': 0.13,
         'percent_pos_test': 0.24
     }
@@ -68,15 +58,6 @@ _DATA_PROPERTIES = {
 #         'n_train': 4544,
 #         'n_validation': 1088,
 #         'n_test': 3968,
-#         'percent_pos_train': 0.16,
-#         'percent_pos_val': 0.17,
-#         'percent_pos_test': 0.24
-#     },
-#     'Conf_3': {
-#         'window_time': 3,
-#         'n_train': 2912,
-#         'n_validation': 704,
-#         'n_test': 2560,
 #         'percent_pos_train': 0.16,
 #         'percent_pos_val': 0.17,
 #         'percent_pos_test': 0.24
@@ -113,60 +94,49 @@ def experiment_conf_generator():
         window_size = calc_window_size(_get_freq(), window_time)
         batch_size = calc_batch_size(_get_max_batch_size(),
                                      window_time)
-        for weight_init in _INITIALIZATION:
-            for optimization in _OPTIMIZATION:
-                for n_conv in _N_CONV_LAYER:
-                    for n_dense in _N_DENSE_LAYER:
-                        for dropout in _DROPOUT:
-                            for pooling in _POOLING:
-                                for atrous in _ATROUS:
-                                    for regular in _REGULARIZATION:
-    #                                     experiment_conf_list.append({
-    #                                         'data_conf': data_conf,
-    #                                         'weight_init':
-    #                                             weight_init,
-    #                                         'optimization':
-    #                                             optimization,
-    #                                         'n_conv': n_conv,
-    #                                         'n_dense': n_dense,
-    #                                         'dropout': dropout,
-    #                                         'pooling': pooling,
-    #                                         'atrous': atrous,
-    #                                         'regular': regular,
-    #                                         'kernel': _KERNEL_SHAPE,
-    #                                         'dense': _DENSE_SHAPE
-    #                                     })
-    # return experiment_conf_list
-                                        yield ({
-                                            'conf_name': conf_name,
-                                            'window_time':
-                                                window_time,
-                                            'n_train': n_train,
-                                            'n_validation':
-                                                n_validation,
-                                            'n_test': n_test,
-                                            'percent_pos_train':
-                                                percent_pos_train,
-                                            'percent_pos_val':
-                                                percent_pos_val,
-                                            'percent_pos_test':
-                                                percent_pos_test,
-                                            'weight_init':
-                                                weight_init,
-                                            'optimization':
-                                                optimization,
-                                            'n_conv': n_conv,
-                                            'n_dense': n_dense,
-                                            'dropout': dropout,
-                                            'pooling': pooling,
-                                            'atrous': atrous,
-                                            'regular': regular,
-                                            'kernel': _KERNEL_SHAPE,
-                                            'dense': _DENSE_SHAPE,
-                                            'window_size':
-                                                window_size,
-                                            'batch_size': batch_size
-                                        })
+        for temporal in _TEMPORAL_MODEL:
+            for weight_init in _INITIALIZATION:
+                for optimization in _OPTIMIZATION:
+                    for n_conv in _N_CONV_LAYER:
+                        for n_dense in _N_DENSE_LAYER:
+                            for dropout in _DROPOUT:
+                                for pooling in _POOLING:
+                                    for atrous in _ATROUS:
+                                        for regular in _REGULARIZATION:
+                                            yield ({
+                                                'conf_name':
+                                                    conf_name,
+                                                'window_time':
+                                                    window_time,
+                                                'n_train': n_train,
+                                                'n_validation':
+                                                    n_validation,
+                                                'n_test': n_test,
+                                                'percent_pos_train':
+                                                    percent_pos_train,
+                                                'percent_pos_val':
+                                                    percent_pos_val,
+                                                'percent_pos_test':
+                                                    percent_pos_test,
+                                                'weight_init':
+                                                    weight_init,
+                                                'optimization':
+                                                    optimization,
+                                                'n_conv': n_conv,
+                                                'n_dense': n_dense,
+                                                'dropout': dropout,
+                                                'pooling': pooling,
+                                                'atrous': atrous,
+                                                'regular': regular,
+                                                'kernel':
+                                                    _KERNEL_SHAPE,
+                                                'dense': _DENSE_SHAPE,
+                                                'window_size':
+                                                    window_size,
+                                                'batch_size':
+                                                    batch_size,
+                                                'temporal': temporal
+                                            })
 
 
 def get_filter_threshold():

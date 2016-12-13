@@ -11,8 +11,6 @@ from collections import OrderedDict
 from FOG.definitions import parse_conf_mat
 from FOG.definitions import get_metric
 from FOG.definitions import get_activity_class
-
-from FOG.definitions import get_status_ini
 from FOG.definitions import label_is_positive
 from FOG.definitions import label_is_negative
 
@@ -52,37 +50,23 @@ def _calc_metric(conf_mat, metric_name):
     return metric_value
 
 
-def get_statistics(model, generator, samples_count, batch_size):
+def get_statistics(label_data):
     """"""
     existing_class = get_activity_class()
     raw_conf_mat_total = np.zeros((2, 2))
-    status = get_status_ini()
-    end_epoch = False
-    samples_it = 0
     raw_class_statistic = OrderedDict(
         [(class_key, np.zeros((2, 2))) for class_key in
          existing_class])
     
-    for [X, y_true, y_orig], additional_info in generator:
-        try:
-            y_pred = model.predict_on_batch(X)
-        except Exception as e:
-            status = str(repr(e))
-            end_epoch = True
-        else:
-            [conf_mat, raw_class_statistic_part] \
-                = statistics_matrixes(y_true, y_pred, y_orig)
-            raw_conf_mat_total += conf_mat
-            for key, raw_class_conf_mat in \
-                    raw_class_statistic_part.items():
-                raw_class_statistic[key] += raw_class_conf_mat
-            samples_it += batch_size
+    for [y_true, y_orig, y_pred] in label_data:
+        [conf_mat, raw_class_statistic_part] = statistics_matrixes(
+            y_true, y_pred, y_orig)
+        raw_conf_mat_total += conf_mat
+        for key, raw_class_conf_mat in \
+                raw_class_statistic_part.items():
+            raw_class_statistic[key] += raw_class_conf_mat
         
-        if end_epoch or (samples_it + batch_size) > samples_count:
-            # End loop condition (only condition)
-            break
-        
-    return [status, parse_conf_mat(raw_conf_mat_total),
+    return [parse_conf_mat(raw_conf_mat_total),
             OrderedDict([(class_key, parse_conf_mat(
                 raw_class_conf_mat))
                          for class_key, raw_class_conf_mat in

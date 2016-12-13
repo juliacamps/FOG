@@ -78,9 +78,6 @@ def single_train(model, train_generator, n_epoch, n_train,
 
 
     """
-    if temporal:
-        # TODO control temporal case
-        print('IS TEMPORAL!!')
     summary = None
     time_ini = time.clock()
     status = get_status_ini()
@@ -94,6 +91,9 @@ def single_train(model, train_generator, n_epoch, n_train,
         for [X, y, y_orig], additional_info in train_generator:
             current_patinet = additional_info['patient']
             current_file = additional_info['file']
+            reset_state = additional_info['reset_state']
+            if temporal and reset_state:
+                model.reset_states()
             try:
                 model.train_on_batch(X, y)
             except Exception as e:
@@ -172,16 +172,40 @@ def predict_result(model, train_patient, window_size, batch_size,
         n_validation=n_validation, batch_size=batch_size)
 
 
+def predict_label(model, generator, batch_size, n_train, temporal):
+    """"""
+    status = get_status_ini()
+    label_data = []
+    samples_it = 0
+    for [X, y_true, y_orig], additional_info in generator:
+        if temporal and additional_info['reset_state']:
+            model.reset_states()
+        try:
+            y_pred = model.predict_on_batch(X)
+        except Exception as e:
+            status = str(repr(e))
+        else:
+            label_data.append((y_true, y_orig, y_pred))
+            samples_it += batch_size
+            # End loop only condition
+            if (not check_status(status)
+                    or (samples_it + batch_size) > n_train):
+                break
+    return status, label_data
+
+
 def predict_single_result(model, train_generator, batch_size, n_train,
-                          validation_generator=None, n_validation=None):
+                          temporal, validation_generator=None,
+                          n_validation=None):
     """"""
     train_metrics = None
     val_metrics = None
     prediction = OrderedDict([])
-    [status, train_conf_mat, train_statistic] = \
-        get_statistics(model, train_generator, n_train, batch_size)
-        
+    status, label_data = predict_label(model, train_generator,
+                                       batch_size, n_train, temporal)
+    
     if check_status(status):
+        [train_conf_mat, train_statistic] = get_statistics(label_data)
         msg = 'OK: Prediction successful for Train data'
         report_event(msg)
         train_metrics = metrics_calc(train_conf_mat)
@@ -189,29 +213,23 @@ def predict_single_result(model, train_generator, batch_size, n_train,
             (get_prediction_global_key(), train_metrics),
             (get_prediction_partial_key(), train_statistic)])
 
-        # msg = ('Train metrics:\n'
-        #        + to_string(prediction['train'][
-        #                        get_prediction_global_key()]))
-        # report_event(msg, is_run_log=True)
-
         if validation_generator is None or n_validation is None:
             report_event('WARNING: No validation generator or '
                          'counter')
         else:
-            [status, val_conf_mat, val_statistic] = \
-                get_statistics(model, validation_generator,
-                               n_validation, batch_size)
+            status, label_data = predict_label(
+                model, validation_generator, batch_size, n_validation,
+                temporal)
+            
             if check_status(status):
+                [val_conf_mat, val_statistic] = get_statistics(
+                    label_data)
                 msg = 'OK: Prediction successful for Validation data'
                 report_event(msg)
                 val_metrics = metrics_calc(val_conf_mat)
                 prediction['validation'] = OrderedDict([
                     (get_prediction_global_key(), val_metrics),
                     (get_prediction_partial_key(), val_statistic)])
-                # msg = ('Validation metrics:\n'
-                #        + to_string(prediction['validation'][
-                #                        get_prediction_global_key()]))
-                # report_event(msg, is_run_log=True)
             else:
                 msg = ('ERROR: Aborted prediction for Validation '
                        + 'data: ' + status)
@@ -222,6 +240,7 @@ def predict_single_result(model, train_generator, batch_size, n_train,
     
     return [status, prediction, get_prediction_summary(
         train_metrics, val_metrics)]
+
 
 # EOF
 

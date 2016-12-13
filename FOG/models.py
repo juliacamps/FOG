@@ -5,6 +5,7 @@
 
 from keras.models import Sequential
 from keras.layers import Dense
+from keras.layers import LSTM
 from keras.layers import Dropout
 from keras.layers import Flatten
 from keras.layers.convolutional import AtrousConvolution1D
@@ -20,15 +21,17 @@ def build_model(window_size, n_conv, n_dense, k_shapes,
                 temporal_model, atrous, regularizer):
     """Build the model"""
     n_feature = get_n_feature()
-
-    if regularizer == 'l1':
-        regular = l1(l=0.01)
-    elif regularizer == 'l2':
-        regular = l2(l=0.01)
-    else:
-        # Not accepted option
-        print('ERROR: Regularizer is Undefined')
+    if regularizer is None:
         regular = None
+    else:
+        if regularizer == 'l1':
+            regular = l1(l=0.01)
+        elif regularizer == 'l2':
+            regular = l2(l=0.01)
+        else:
+            # Not accepted option
+            print('ERROR: Regularizer is Undefined')
+            regular = None
             
     model = Sequential()
     model_structure = ''
@@ -80,17 +83,25 @@ def build_model(window_size, n_conv, n_dense, k_shapes,
             model_structure += 'DR(' + str(dropout) + ')-'
     model.add(Flatten())
     
-    # if temporal_model:
-    
-    for i in range(n_dense):
-        model.add(Dense(dense_shape[i], activation='relu',
-                         init=init, W_regularizer=regular))
-        model_structure += 'DN(' + str(dense_shape[i]) + ')-'
+    if temporal_model:
+        for i in range(n_dense):
+            model.add(LSTM(dense_shape[i], activation='relu',
+                           init=init))
+            model_structure += 'LSTM(' + str(dense_shape[i]) + ')-'
         
-        if dropout > 0:
-            model.add(Dropout(dropout))
-            model_structure += 'D(' + str(dropout) + ')-'
-
+            # if dropout > 0:
+            #     model.add(Dropout(dropout))
+            #     model_structure += 'D(' + str(dropout) + ')-'
+    else:
+        for i in range(n_dense):
+            model.add(Dense(dense_shape[i], activation='relu',
+                             init=init, W_regularizer=regular))
+            model_structure += 'DN(' + str(dense_shape[i]) + ')-'
+            
+            if dropout > 0:
+                model.add(Dropout(dropout))
+                model_structure += 'D(' + str(dropout) + ')-'
+    
     model.add(Dense(1, activation='sigmoid',
                      W_regularizer=regular))
     model_structure += ('DN(1,Sigmoid)|INIT:' + init + '|REGULAR:'

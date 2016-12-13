@@ -5,7 +5,6 @@
 
 import numpy as np
 import random as rd
-import pandas as pd
 from collections import Counter
 
 from FOG.utils import substract_mean
@@ -39,7 +38,10 @@ def generate_batches(data_structure, window_size, batch_size,
         batch_Y = []
         batch_Y_orig = []
         batch_it = 0
-        for patient_name, patient_data in data_structure.items():
+        reset_state = temporal
+        epoch_data = list(data_structure.items())
+        rd.shuffle(epoch_data)
+        for patient_name, patient_data in epoch_data:
             # Augmentation setup: different for each patient and epoch
             shift_indexes = [0]
             rotate = [np.identity(3)]
@@ -66,6 +68,7 @@ def generate_batches(data_structure, window_size, batch_size,
                             batch_Y = []
                             batch_Y_orig = []
                             batch_it = 0
+                            reset_state = True
                         with open(file_path, 'r') as file:
                             for X, y, y_orig in read_window(
                                     file, window_size, shift):
@@ -81,23 +84,28 @@ def generate_batches(data_structure, window_size, batch_size,
                                     if batch_it == batch_size:
                                         yield ([np.asarray(batch_X),
                                                np.asarray(batch_Y),
-                                               np.asarray(batch_Y_orig)],
-                                               {'patient': patient_name,
-                                                'file': file_path})
-                                        y_cum += sum(np.asarray(batch_Y))
+                                               np.asarray(
+                                                   batch_Y_orig)],
+                                               {'patient':
+                                                    patient_name,
+                                                'file': file_path,
+                                                'reset_state':
+                                                    reset_state})
+                                        y_cum += sum(np.asarray(
+                                            batch_Y))
                                         batch_count += 1
                                         batch_X = []
                                         batch_Y = []
                                         batch_Y_orig = []
                                         batch_it = 0
+                                        reset_state = False
                                 elif temporal:
                                     batch_it = 0
                                     batch_X = []
                                     batch_Y = []
                                     batch_Y_orig = []
-                                    # model_.reset_states()
-                
-            # model_.reset_states()
+                                    reset_state = True
+                                    
     #     n_samples = batch_count * batch_size
     #     # print('Total number of samples in all data: ')
     #     # print(aux_count)
@@ -258,29 +266,38 @@ if __name__ == '__main__':
         problem=problem)
 
     full_batch_size = 128
-    window_times = [2, 3]
+    window_times = [2]
     filter_thresholds = [0.5]
-    data_freq = 100
+    data_freq = 50
     n_shift = 2
     n_rotate = 4
+    temporals = [False]
     for window_time in window_times:
         batch_size = int(round(full_batch_size / 2**(window_time-1)))
         window_size = int(window_time * data_freq)
-        for filter_th in filter_thresholds:
-            print('\nBatch_s:' + str(batch_size) + ' window:' +
-                  str(window_time) + ' filter:' + str(filter_th))
-            print('TRAIN')
-            get_generator(
-                train_data, window_size, batch_size, False,
-                problem, validation_patient=None,
-                shift_augmentation=2, rotate_augmentation=4,
-                threshold=filter_th, settings=None)
-            print('VAL')
-            get_generator(
-                val_data, window_size, batch_size, False,
-                problem, validation_patient=None,
-                shift_augmentation=0, rotate_augmentation=0,
-                threshold=filter_th, settings=None)
+        for temporal in temporals:
+            print('TEMPORAL: ' + str(temporal))
+            for filter_th in filter_thresholds:
+                print('\nBatch_s:' + str(batch_size) + ' window:' +
+                      str(window_time) + ' filter:' + str(filter_th))
+                print('TRAIN')
+                get_generator(
+                    train_data, window_size, batch_size, temporal,
+                    problem, validation_patient=None,
+                    shift_augmentation=2, rotate_augmentation=4,
+                    threshold=filter_th, settings=None)
+                print('VAL')
+                get_generator(
+                    val_data, window_size, batch_size, temporal,
+                    problem, validation_patient=None,
+                    shift_augmentation=0, rotate_augmentation=0,
+                    threshold=filter_th, settings=None)
+                print('TEST')
+                get_generator(
+                    test_data, window_size, batch_size, temporal,
+                    problem, validation_patient=None,
+                    shift_augmentation=0, rotate_augmentation=0,
+                    threshold=filter_th, settings=None)
             
     print('END')
 
