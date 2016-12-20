@@ -32,7 +32,10 @@ def generate_batches(data_structure, window_size, batch_size,
     rotate_count = 1 + rotate_augmentation
 
     while 1:
-        batch_count = 0
+        # aux_count = 0
+        # reset_count = 0
+        # continue_count = 0
+        # batch_count = 0
         y_cum = 0
         batch_X = []
         batch_Y = []
@@ -72,7 +75,7 @@ def generate_batches(data_structure, window_size, batch_size,
                         with open(file_path, 'r') as file:
                             for X, y, y_orig in read_window(
                                     file, window_size, shift):
-
+                                # aux_count += X.shape[0]
                                 y, valid = check_label(y, threshold)
                                 if valid and window_size == X.shape[0]:
                                     X = preprocess_data(X, global_std,
@@ -91,9 +94,13 @@ def generate_batches(data_structure, window_size, batch_size,
                                                 'file': file_path,
                                                 'reset_state':
                                                     reset_state})
+                                        # if reset_state:
+                                        #     reset_count += 1
+                                        # else:
+                                        #     continue_count += 1
                                         y_cum += sum(np.asarray(
                                             batch_Y))
-                                        batch_count += 1
+                                        # batch_count += 1
                                         batch_X = []
                                         batch_Y = []
                                         batch_Y_orig = []
@@ -107,17 +114,19 @@ def generate_batches(data_structure, window_size, batch_size,
                                     reset_state = True
                                     
     #     n_samples = batch_count * batch_size
-    #     # print('Total number of samples in all data: ')
-    #     # print(aux_count)
+    #     print('Total number of samples in all data: ')
+    #     print(aux_count)
     #     print('Num Batches: ' + str(batch_count))
     #     print('Available number of samples: ' + str(
     #         n_samples))
     #     print('Percentage of FOG:')
     #     print(y_cum / n_samples)
-    #     # print('Percentage of lost samples:')
-    #     # print(1 - (n_samples * window_size) / aux_count)
+    #     print('Percentage of lost samples:')
+    #     print(1 - (n_samples * window_size) / aux_count)
     #     # print('Discarded only for threshold filtering: '
     #     #       + str(discarded))
+    #     print('Reset: ' + str(reset_count))
+    #     print('Continue: ' + str(continue_count))
     #     break
     # return 1
 
@@ -265,20 +274,25 @@ if __name__ == '__main__':
     [train_data, val_data, test_data] = get_patient_split(
         problem=problem)
 
-    full_batch_size = 128
+    max_batch_size = 128
+    max_batch_size_temporal = 64
     window_times = [2]
-    filter_thresholds = [0.5]
+    filter_thresholds = [0.4]
     data_freq = 50
     n_shift = 2
     n_rotate = 4
-    temporals = [False]
-    for window_time in window_times:
-        batch_size = int(round(full_batch_size / 2**(window_time-1)))
-        window_size = int(window_time * data_freq)
-        for temporal in temporals:
-            print('TEMPORAL: ' + str(temporal))
+    temporals = [False, True]
+    for temporal in temporals:
+        if temporal:
+            max_batch = max_batch_size_temporal
+        else:
+            max_batch = max_batch_size
+        print('\nTEMPORAL: ' + str(temporal))
+        for window_time in window_times:
+            batch_size = int(round(max_batch / 2**(window_time-1)))
+            window_size = int(window_time * data_freq)
             for filter_th in filter_thresholds:
-                print('\nBatch_s:' + str(batch_size) + ' window:' +
+                print('Batch_s:' + str(batch_size) + ' window:' +
                       str(window_time) + ' filter:' + str(filter_th))
                 print('TRAIN')
                 get_generator(

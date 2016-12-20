@@ -3,6 +3,7 @@
 scripts/
 __pycache__/
 model/
+tensorflow_env/
 
 # SCRIPTS #
 ###########

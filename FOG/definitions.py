@@ -143,7 +143,7 @@ def define_settings(settings, new_settings_dict=None,
                     random_seed=None, problem=None,
                     train_patient=None, val_patient=None,
                     reproducibility=None, temporal=None,
-                    global_std=None):
+                    global_std=None, learning_rate=None):
     """"""
     if new_settings_dict is not None:
         for setting_key, setting_value in new_settings_dict.items():

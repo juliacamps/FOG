@@ -22,8 +22,9 @@ from FOG.definitions import get_prediction_summary
 
 
 def train_model(model, train_patient, n_epoch, n_train,
-                batch_size, window_size, temporal_dependency, problem,
-                validation_patient=None, n_validation=0, settings=None):
+                batch_size, window_size, temporal, problem,
+                class_weight, validation_patient=None, n_validation=0,
+                settings=None):
     """Train model on the selected patients
 
     Parameters
@@ -49,14 +50,14 @@ def train_model(model, train_patient, n_epoch, n_train,
 
     train_generator, validation_generator, settings = get_generator(
         train_patient, window_size, batch_size,
-        temporal_dependency, problem,
-        validation_patient=validation_patient, settings=settings)
+        temporal, problem, validation_patient=validation_patient,
+        settings=settings)
 
     [status, trained_model, train_summary, settings] = single_train(
         model, train_generator, n_epoch, n_train, batch_size,
+        temporal, class_weight,
         validation_generator=validation_generator,
-        n_validation=n_validation,
-        temporal=temporal_dependency, settings=settings)
+        n_validation=n_validation, settings=settings)
     if check_status(status):
         msg = 'OK: Training process finished successfully'
         is_error = False
@@ -72,7 +73,8 @@ def train_model(model, train_patient, n_epoch, n_train,
 
 
 def single_train(model, train_generator, n_epoch, n_train,
-                 batch_size, temporal, validation_generator=None,
+                 batch_size, temporal, class_weight,
+                 validation_generator=None,
                  n_validation=0, settings=None):
     """Train the model
 
@@ -92,10 +94,17 @@ def single_train(model, train_generator, n_epoch, n_train,
             current_patinet = additional_info['patient']
             current_file = additional_info['file']
             reset_state = additional_info['reset_state']
-            if temporal and reset_state:
-                model.reset_states()
+            # if temporal and reset_state:
+            #     model.reset_states()
+            #     print('Reset')
+            #     print(current_patinet)
+            #     print(current_file)
+            # else:
+            #     print('continue')
+            #     print(current_patinet)
+            #     print(current_file)
             try:
-                model.train_on_batch(X, y)
+                model.train_on_batch(X, y, class_weight=class_weight)
             except Exception as e:
                 status = str(repr(e))
                 msg = ('ERROR:  Train failed for epoch '
@@ -120,9 +129,9 @@ def single_train(model, train_generator, n_epoch, n_train,
                 
         if check_status(status):
             [status, prediction, summary] = predict_single_result(
-                model, train_generator, batch_size,
+                model, train_generator, batch_size, n_train, temporal,
                 validation_generator=validation_generator,
-                n_train=n_train, n_validation=n_validation)
+                n_validation=n_validation)
             if check_status(status):
                 train_evolution.append(['Epoch ' + str(epoch_it),
                                         prediction])
@@ -152,24 +161,6 @@ def single_train(model, train_generator, n_epoch, n_train,
             time.clock() - time_ini), new_settings_dict=summary)
     
     return [status, model, train_evolution, settings]
-
-
-def predict_result(model, train_patient, window_size, batch_size,
-                   temporal, problem, n_train, threshold,
-                   augment_shift, augment_rotate,
-                   validation_patient=None, n_validation=None):
-    """"""
-
-    train_generator, validation_generator = get_generator(
-        train_patient, window_size, batch_size, temporal,
-        problem, validation_patient=validation_patient,
-        shift_augmentation=augment_shift,
-        rotate_augmentation=augment_rotate, threshold=threshold)
-    
-    return predict_single_result(
-        model, train_generator,
-        validation_generator=validation_generator, n_train=n_train,
-        n_validation=n_validation, batch_size=batch_size)
 
 
 def predict_label(model, generator, batch_size, n_train, temporal):
@@ -240,6 +231,24 @@ def predict_single_result(model, train_generator, batch_size, n_train,
     
     return [status, prediction, get_prediction_summary(
         train_metrics, val_metrics)]
+
+
+def predict_result(model, train_patient, window_size, batch_size,
+                   temporal, problem, n_train, threshold,
+                   augment_shift, augment_rotate,
+                   validation_patient=None, n_validation=None):
+    """"""
+    
+    train_generator, validation_generator = get_generator(
+        train_patient, window_size, batch_size, temporal,
+        problem, validation_patient=validation_patient,
+        shift_augmentation=augment_shift,
+        rotate_augmentation=augment_rotate, threshold=threshold)
+    
+    return predict_single_result(
+        model, train_generator, batch_size, n_train, temporal,
+        validation_generator=validation_generator,
+        n_validation=n_validation)
 
 
 # EOF

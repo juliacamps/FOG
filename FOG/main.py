@@ -79,7 +79,8 @@ if __name__ == '__main__':
                 init=configuration['weight_init'],
                 atrous=configuration['atrous'],
                 regularizer=configuration['regular'],
-                temporal_model=configuration['temporal'])
+                temporal=configuration['temporal'],
+                learning_rate=configuration['learning_rate'])
             
             settings = define_settings(
                 settings, model_conf=model_structure,
@@ -92,8 +93,9 @@ if __name__ == '__main__':
                 model, train_patient, _N_EPOCH, configuration[
                     'n_train'], configuration['batch_size'],
                 configuration['window_size'],
-                configuration['temporal'],
-                _DETECTION_PROBLEM, validation_patient=val_patient,
+                configuration['temporal'], _DETECTION_PROBLEM,
+                configuration['class_weight'],
+                validation_patient=val_patient,
                 n_validation=configuration['n_validation'],
                 settings=settings)
 

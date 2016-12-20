@@ -12,13 +12,14 @@ from keras.layers.convolutional import AtrousConvolution1D
 from keras.layers.convolutional import Convolution1D
 from keras.layers.convolutional import MaxPooling1D
 from keras.regularizers import l1, l2
+from keras.optimizers import Adam
 
 from FOG.experiment_conf import get_n_feature
 
 
 def build_model(window_size, n_conv, n_dense, k_shapes,
                 dense_shape, init, opt_name, pooling, dropout,
-                temporal_model, atrous, regularizer):
+                atrous, regularizer, temporal, learning_rate):
     """Build the model"""
     n_feature = get_n_feature()
     if regularizer is None:
@@ -81,9 +82,8 @@ def build_model(window_size, n_conv, n_dense, k_shapes,
         if dropout > 0:
             model.add(Dropout(dropout))
             model_structure += 'DR(' + str(dropout) + ')-'
-    model.add(Flatten())
     
-    if temporal_model:
+    if temporal:
         for i in range(n_dense):
             model.add(LSTM(dense_shape[i], activation='relu',
                            init=init))
@@ -93,6 +93,7 @@ def build_model(window_size, n_conv, n_dense, k_shapes,
             #     model.add(Dropout(dropout))
             #     model_structure += 'D(' + str(dropout) + ')-'
     else:
+        model.add(Flatten())
         for i in range(n_dense):
             model.add(Dense(dense_shape[i], activation='relu',
                              init=init, W_regularizer=regular))
@@ -106,10 +107,16 @@ def build_model(window_size, n_conv, n_dense, k_shapes,
                      W_regularizer=regular))
     model_structure += ('DN(1,Sigmoid)|INIT:' + init + '|REGULAR:'
                         + str(regular))
-    
+    if opt_name == 'adam':
+        opt = Adam(lr=learning_rate, beta_1=0.9, beta_2=0.999,
+                    epsilon=1e-08, decay=0.0)
+    else:
+        opt = None
     model.compile(loss='binary_crossentropy',
-                  optimizer=opt_name, metrics=[])
-    model_structure += '|OPT:' + opt_name
+                  optimizer=opt, metrics=[])
+    model_structure += ('|OPT:' + opt_name + '(lr=' + str(
+        learning_rate)
+                        + ')')
     
     return [model_structure, model]
 
