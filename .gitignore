@@ -4,6 +4,8 @@ scripts/
 __pycache__/
 model/
 tensorflow_env/
+prediction/
+train_log/
 
 # SCRIPTS #
 ###########
@@ -14,6 +16,7 @@ exp*
 _*
 .*
 aux*
+summary*
 
 # DATA #
 ########

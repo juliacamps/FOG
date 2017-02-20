@@ -5,7 +5,7 @@
 
 import numpy as np
 import random as rd
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 
 from FOG.definitions import init_settings
 from FOG.definitions import define_settings
@@ -25,21 +25,62 @@ from FOG.experiment_conf import get_seed_for_random
 from FOG.experiment_conf import experiment_conf_generator
 
 from FOG.preprocessing_tools import get_patient_split
+from FOG.preprocessing_tools import get_dataset
+from FOG.preprocessing_tools import get_data_files
 
 from FOG.models import build_model
+from FOG.models import compile_model
 
 from FOG.core_functions import train_model
+from FOG.core_functions import predict_model
 from FOG.core_functions import predict_result
+from FOG.core_functions import add_configuration
 
 
 _DETECTION_PROBLEM = 'fog'
-_GENERATE_SUMMARY = True
+_GENERATE_SUMMARY = False
 _TRAIN_MODEL = True
 _TEST_MODEL = False
-_REPRODUCIBILITY = True
-_N_EPOCH = 100
+_REPRODUCIBILITY = False
+_PREDICT = True
+_SAVE_REDUCED_PREDICTION = True
+
+_MODEL_NAME = [
+    'model_fog_55',
+    'model_fog_56',
+    'model_fog_57',
+    'model_fog_58'
+    # 'model_fog_59'
+]
 _SEED = get_seed_for_random()
 
+def predict(model_name, train_patient, val_patient, test_patient):
+    """"""
+    status, model, settings, configuration = load_model(model_name)
+    
+    compile_model(model, configuration['objective'],
+                  configuration['optimization'])
+    
+    add_configuration(model_name, configuration)
+    
+    # Load data
+    data = OrderedDict()
+    data['train'] = get_data_files(train_patient)
+    data['val'] = get_data_files(val_patient)
+    data['test'] = get_data_files(test_patient)
+    
+    predict_model(model, data,
+                  batch_size=configuration['batch_size'],
+                  window_size=configuration['window_size'],
+                  temporal=configuration['temporal'],
+                  percent_throw_no_fog=configuration[
+                      'percent_throw_no_fog'], cutting=configuration[
+            'cutting'],
+                  pure_threshold=configuration[
+                      'pure_threshold'],
+                  problem=_DETECTION_PROBLEM,
+                  model_name=model_name,
+                  reduce_memory=_SAVE_REDUCED_PREDICTION)
 
 if __name__ == '__main__':
     
@@ -51,60 +92,126 @@ if __name__ == '__main__':
     # Get data
     [train_patient, val_patient, test_patient] = get_patient_split(
         _DETECTION_PROBLEM)
+    
+    # PREDICT AND PLOT RESULTS
+    if _PREDICT and not _TRAIN_MODEL:
+        for model_name in _MODEL_NAME:
+            
+            settings = init_settings()
+            status, model, settings_aux, configuration = load_model(
+                model_name)
+            
+            settings = define_settings(settings,
+                                       new_settings_dict=configuration)
+            compile_model(model, configuration['objective'],
+                          configuration['optimization'])
 
+            add_configuration(model_name, configuration)
+            
+
+            # Load data
+            data = OrderedDict()
+            data['train'] = get_data_files(train_patient)
+            data['val'] = get_data_files(val_patient)
+            data['test'] = get_data_files(test_patient)
+
+            predict_model(model, data,
+                          batch_size=configuration['batch_size'],
+                          window_size=configuration['window_size'],
+                          temporal=configuration['temporal'],
+                          percent_throw_no_fog=configuration[
+                              'percent_throw_no_fog'], cutting=configuration[
+                              'cutting'],
+                          pure_threshold=configuration[
+                              'pure_threshold'],
+                          problem=_DETECTION_PROBLEM,
+                          model_name=model_name,
+                          reduce_memory=_SAVE_REDUCED_PREDICTION)
+        
     # NEW MODEL CODE
     if _TRAIN_MODEL:
+        # Load data
+        train_data = get_dataset(train_patient)
+        validation_data = get_dataset(val_patient)
+        
+        exp_index = 0
+        load_m = False  # _LOAD_MODEL[exp_index]
         for configuration in experiment_conf_generator():
-            settings = init_settings()
-            model_name = get_new_model_name(
-                problem=_DETECTION_PROBLEM)
+            
             day_date = get_date()
+            settings = init_settings()
+            settings = define_settings(settings, date=day_date,
+                                       new_settings_dict=configuration)
+            n_epoch = configuration['n_epoch']
+
             
-            settings = define_settings(
-                settings, new_settings_dict=configuration,
-                date=day_date,
-                model_name=model_name, problem=_DETECTION_PROBLEM,
-                n_epoch=_N_EPOCH, reproducibility=_REPRODUCIBILITY,
-                random_seed=_SEED)
+            if not load_m:
+                model_name = get_new_model_name(
+                    problem=_DETECTION_PROBLEM)
+                settings = define_settings(
+                    settings, model_name=model_name,
+                    problem=_DETECTION_PROBLEM, n_epoch=n_epoch,
+                    reproducibility=_REPRODUCIBILITY,
+                    random_seed=_SEED)
             
-            [model_structure, model] = build_model(
-                window_size=configuration['window_size'],
-                n_conv=configuration['n_conv'],
-                n_dense=configuration['n_dense'],
-                k_shapes=configuration['kernel'],
-                dense_shape=configuration['dense'],
-                opt_name=configuration['optimization'],
-                pooling=configuration['pooling'],
-                dropout=configuration['dropout'],
-                init=configuration['weight_init'],
-                atrous=configuration['atrous'],
-                regularizer=configuration['regular'],
-                temporal=configuration['temporal'],
-                learning_rate=configuration['learning_rate'])
-            
-            settings = define_settings(
-                settings, model_conf=model_structure,
-                n_parameter=model.count_params())
+                [model_structure, model] = build_model(
+                    window_size=configuration['window_size'],
+                    conv_layers=configuration['conv'],
+                    dense_layers=configuration['dense'],
+                    optimization=configuration['optimization'],
+                    pooling_layers=configuration['pooling'],
+                    dropout=configuration['dropout'],
+                    init=configuration['weight_init'],
+                    atrous=configuration['atrous'],
+                    regularizer_conf=configuration['regularizer'],
+                    temporal=configuration['temporal'],
+                    objective=configuration['objective'],
+                    activation=configuration['activation'],
+                    last_layer=configuration['last_layer'])
+                
+                settings = define_settings(
+                    settings, model_conf=model_structure,
+                    n_parameter=model.count_params())
+            else:
+                model_name = _MODEL_NAME[exp_index]
+                status, model, settings_aux = load_model(model_name)
+                compile_model(model, configuration['objective'],
+                              configuration['optimization'])
+                
+            exp_index += 1
+
             msg = ('\n\n============= NEW EXPERIMENT ============='
                    + '\nConfiguration:\n' + to_string(settings))
             report_event(msg, is_run_log=True)
-            
-            model, train_summary, settings = train_model(
-                model, train_patient, _N_EPOCH, configuration[
+
+            model, train_summary, settings, n_epoch_real = \
+                train_model(
+                model, train_data, n_epoch, configuration[
                     'n_train'], configuration['batch_size'],
                 configuration['window_size'],
                 configuration['temporal'], _DETECTION_PROBLEM,
-                configuration['class_weight'],
-                validation_patient=val_patient,
+                configuration['percent_throw_no_fog'], configuration['shift'],
+                configuration['rotate'], configuration[
+                    'pos_threshold'], configuration['cutting'],
+                configuration['pure_threshold'],
+                validation_data=validation_data,
                 n_validation=configuration['n_validation'],
-                settings=settings)
-
-            save_model(model, model_name, (settings, train_summary))
+                settings=settings, log_file_name=(
+                    'train_log/' + model_name +
+                        configuration['conf_name'] + '.csv'),
+                model_name=model_name)
+            configuration['n_epoch'] = n_epoch_real
+            save_model(model, model_name, settings, configuration)
 
             msg = ('============ RESULTS & SETTINGS ============'
                    + '\nConfiguration:\n' + to_string(settings)
                    + '\n============ END OF EXPERIMENT ============')
             report_event(msg, is_run_log=True)
+            
+            # IF TRAIN AND PREDICT ON NEW MODEL
+            if _PREDICT:
+                predict(model_name, train_patient, val_patient,
+                        test_patient)
                        
     # SUMMARY GENERATION CODE
     if _GENERATE_SUMMARY:

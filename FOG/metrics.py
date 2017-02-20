@@ -18,14 +18,14 @@ from FOG.definitions import label_is_negative
 _METRICS = get_metric()
 
 
-def metrics_calc(conf_mat, metrics=None):
-    """"""
-    if metrics is None:
-        metrics = _METRICS
-    result_metrics = OrderedDict([])
-    for metric in metrics:
-        result_metrics[metric] = _calc_metric(conf_mat, metric)
-    return result_metrics
+# def metrics_calc(y_true, y_pred, metrics=None):
+#     """"""
+#     if metrics is None:
+#         metrics = _METRICS
+#     result_metrics = OrderedDict([])
+#     for metric in metrics:
+#         result_metrics[metric] = _calc_metric(conf_mat, metric)
+#     return result_metrics
 
 
 def _calc_metric(conf_mat, metric_name):

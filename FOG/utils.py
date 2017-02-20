@@ -11,6 +11,11 @@ from FOG.definitions import get_delimiter
 from FOG.definitions import get_delimiter_level
 
 
+def fft_window(window):
+    """"""
+    return np.abs(np.fft.fft(window, axis=0) / window.shape[0])
+
+
 def is_numeric(string):
     """"""
     if string.endswith('\n'):
@@ -31,29 +36,29 @@ def parse_value(content, force=False):
     return content
 
 
-def substract_mean(X):
-    """"""
-    return X - X.mean(axis=0)
+# def substract_mean(X):
+#     """"""
+#     return X - X.mean(axis=0)
 
 
-def calc_batch_size(max_size, window_time):
-    """"""
-    return int(round(max_size / 2 ** (window_time - 1)))
+# def calc_batch_size(max_size, window_time):
+#     """"""
+#     return int(round(max_size / 2 ** (window_time - 2)))
 
 
 def calc_window_size(freq, window_time):
     """"""
-    return freq * window_time
+    return int(np.round(freq * window_time))
 
 
 def degree_to_radian(degree):
     """"""
     return degree * np.pi / 180
 
-
-def plot_results():
-    """"""
-    # TODO
+#
+# def plot_results():
+#     """"""
+#     # TODO
     
     
 def get_date():
