@@ -6,123 +6,221 @@
 import time
 import numpy as np
 from math import sqrt
+# from os import mkdir
+# from os import listdir
+# import random as rd
 
 from collections import OrderedDict
 
-# from keras.callbacks import CSVLogger
-# from keras.callbacks import LambdaCallback
-
 from FOG.io_functions import save_data
+# from FOG.io_functions import prepare_data_path
+# from FOG.io_functions import add_freq_to_data_path
+# from FOG.io_functions import add_patient_to_data_path
+# from FOG.io_functions import read_data_file
 
 from FOG.preprocessing_tools import get_generator
-from FOG.preprocessing_tools import get_prediction_generator
+# from FOG.preprocessing_tools import get_patient_split
+#
+# from FOG.metrics import get_statistics
 
-from FOG.metrics import get_statistics
-# from FOG.metrics import metrics_calc
 
-from FOG.io_functions import report_event
-from FOG.definitions import get_status_ini
-from FOG.definitions import check_status
-from FOG.definitions import get_prediction_partial_key
-from FOG.definitions import get_prediction_global_key
-from FOG.definitions import define_settings
-# from FOG.definitions import label_is_positive
-from FOG.definitions import get_prediction_summary
+# from FOG.io_functions import report_event
+# from FOG.definitions import get_status_ini
+# from FOG.definitions import check_status
+# from FOG.definitions import get_prediction_partial_key
+# from FOG.definitions import get_prediction_global_key
+# from FOG.definitions import define_settings
+# from FOG.definitions import get_data_dict
+# from FOG.definitions import get_precalculated_data_path
+# from FOG.definitions import get_patient_partition
+
+# from FOG.definitions import get_prediction_summary
 
 from FOG.utils import to_string
 
-# import matplotlib.pyplot as plt
-
-#
-# from matplotlib import pyplot as plt
-#
-#
-#
-# train_summary = OrderedDict([])
-
-# epoch_conf_mat = np.zeros((2, 2))
-# epoch_y_pred = np.array(([],))
-# epoch_y_true = np.array(([],))
-# epoch_true_pos = 0.
-# epoch_true_neg = 0.
-# epoch_positives = 0.
-# epoch_negatives = 0.
-
-#
-# epoch_it = 0
+from keras.callbacks import LambdaCallback
+# from keras.callbacks import History
+# from keras.callbacks import Callback
 
 
-# def save_results(logs):
+# def generate_all_data(augmentation, window_time, batch_size, stacking,
+#                       pure_threshold, temporal, n_feature,
+#                       exclude_freq=[]):
 #     """"""
-#     # global epoch_y_pred
-#     # global epoch_y_true
-#     # if epoch_y_pred is None:
-#     #     epoch_y_pred = np.sign(logs['y_pred'])
-#     #     epoch_y_true = logs['y_true']
-#     # else:
-#     #     epoch_y_pred = np.concatenate(
-#     #         (epoch_y_pred, np.sign(logs['y_pred'])))
-#     #     epoch_y_true = np.concatenate((epoch_y_true, logs['y_true']))
-#     global epoch_true_pos
-#     global epoch_true_neg
-#     global epoch_positives
-#     global epoch_negatives
-#     epoch_true_pos += logs['TP']
-#     epoch_true_neg += logs['TN']
-#     epoch_positives += logs['P']
-#     epoch_negatives += logs['N']
-        
-    # print((np.sign(logs['y_pred'])).shape)
-    # print(epoch_y_pred.shape)
-    # print((np.sign(logs['y_pred'])).ndim)
-    # print(epoch_y_pred.ndim)
-    
-    # y_pred = np.sign(logs['y_pred'])
-    # y_true = logs['y_true']
-    # positives = np.maximum(y_true, 0.)
-    # pred_pos = np.maximum(y_pred, 0.)
-    # negatives = np.maximum(-y_true, 0.)
-    # pred_neg = np.maximum(-y_pred, 0.)
-    # true_pos = pred_pos * positives
-    # false_pos = pred_pos - true_pos
-    # true_neg = pred_neg * negatives
-    # false_neg = pred_neg - true_neg
-    # epoch_conf_mat[0, 0] += np.sum(true_pos)
-    # epoch_conf_mat[0, 1] += np.sum(false_neg)
-    # epoch_conf_mat[1, 0] += np.sum(false_pos)
-    # epoch_conf_mat[1, 1] += np.sum(true_neg)
+#     # Get data dict and paths
+#     data_dict = get_data_dict()
+#     data_path = get_precalculated_data_path()
+#     prepare_data_path(data_path)
+#     train_patient, val_patient, test_patient = \
+#         get_patient_partition()
+#
+#     # Generate augmentation
+#     for data_freq, data in data_dict.items():
+#         if data_freq in exclude_freq:
+#             continue
+#         add_freq_to_data_path(data_path, data_freq)
+#         window_size = int(window_time * data_freq)
+#         for patient, patient_files in data.items():
+#             if patient in train_patient:
+#                 patient_type = 'train'
+#                 patient_augm = augmentation
+#             else:
+#                 continue
+#             # elif patient in val_patient:
+#             #     patient_type = 'val'
+#             #     patient_augm = 1
+#             # elif patient in test_patient:
+#             #     patient_type = 'test'
+#             #     patient_augm = 1
+#             # else:
+#             #     continue
+#             patient_path = add_patient_to_data_path(
+#                 data_path, patient, data_freq, patient_type)
+#             generate_patient_data(patient_path, patient_files,
+#                                   patient_augm, window_size,
+#                                   batch_size, stacking,
+#                                   pure_threshold, data_freq, temporal)
 
-#
-# def save_epoch_result(epoch, logs):
+
+# def generate_patient_data(patient_path, patient_files,
+#                           patient_augm, window_size, batch_size,
+#                           stacking, pure_threshold, data_freq,
+#                           temporal, n_feature):
 #     """"""
+#     roate_proba = max(0., min(0.5, (patient_augm - 4) * 0.1))
+#     for i in range(patient_augm):
+#         new_file_path = patient_path + '/' + str(i)
+#         mkdir(new_file_path)
+#         predict = (i == 1)
+#         for data_file in patient_files:
+#             patient_data = read_data_file(data_file)
+#             file_generator, aux_val, aux_settings = \
+#                 get_generator(
+#                 patient_data, window_size, batch_size, stacking,
+#                 pure_threshold, data_freq, n_feature,
+#                     validation_data=None,
+#                 settings=None, temporal=temporal, predict=predict,
+#                 get_raw_data=False, single_file=True, roate_proba=roate_proba)
+#             generate_file_transformed(file_generator,
+#                                       new_file_path, data_file,
+#                                       batch_size, window_size)
 #
-#     # global train_conf_mat
-#     # train_conf_mat[epoch] = metrics_calc()
-#     # y_true = logs['results']
+#
+# def generate_file_transformed(file_generator, new_file_path,
+#                               data_file, batch_size, window_size):
+#     """"""
+#     X_total = None
+#     y_true_total = np.array([])
+#     for X_batch, y_batch in file_generator:
+#         for it in range(batch_size):
+#             X = X_batch[it]
+#             y_true = y_batch[it]
+#             y_true_total = np.concatenate(
+#                 (y_true_total,
+#                  np.full(window_size, y_true, dtype=int)), axis=0)
+#
+#             if X_total is None:
+#                 X_total = X
+#             else:
+#                 X_total = np.concatenate((X_total, X))
+#
+#     complete_data = np.concatenate((X_total,
+#                                     y_true_total[:, np.newaxis]),
+#                                    axis=1)
+#     save_data(data=complete_data,
+#               file_path=new_file_path+'/'+data_file[(data_file.rfind(
+#                   '/') + 1):])
+#
+#
+# def load_precalculated(data_freq, batch_size, window_size, temporal):
+#     """"""
+#     train_data_path = get_precalculated_data_path(
+#         data_freq=data_freq, data_type='train')
+#     # val_data_path = get_precalculated_data_path(
+#     #     data_freq=data_freq, data_type='val')
+#     train_data = _load_precalculated(train_data_path)
+#     # val_data = _load_precalculated(val_data_path)
+#     train_data = represent_data(train_data, batch_size,
+#                                 window_size, temporal)
+#     # val_data = represent_data(val_data, batch_size, window_size,
+#     #                           temporal)
+#
+#     return train_data  #, val_data
+#
+#
+# def _load_precalculated(data_path):
+#     """"""
+#     files_dict = defaultdict(list)
+#     for patient in listdir(data_path):
+#         patient_path = data_path + '/' + patient
+#         for augment in listdir(patient_path):
+#             augment_path = patient_path + '/' + augment
+#             for file in listdir(augment_path):
+#                 file_path = augment_path + '/' + file
+#                 file_name = file[:file.rfind('.')]
+#                 files_dict[file_name].append(read_data_file(file_path))
+#     return files_dict
+
+
+# def represent_data(data, batch_size, window_size, temporal):
+#     """"""
+#     if temporal:
+#         data_struct = []
+#     else:
+#         data_struct = defaultdict(list)
+#     for file_name, files in data.items():
+#         for file in files:
+#             file_data = []
+#             batch_it = 0
+#             batch_X = []
+#             batch_Y = []
+#             for i in range(0, len(file), window_size):
+#                 window = file[i:i+window_size]
+#                 X = window[:,:-1]
+#                 Y = list(set(window[:,-1]))[0]
+#                 if temporal:
+#                     batch_X.append(X)
+#                     batch_Y.append(Y)
+#                     batch_it += 1
+#                     if batch_it == batch_size:
+#                         file_data.append((np.asarray(batch_X),
+#                                           np.asarray(batch_Y)))
+#                         batch_it = 0
+#                         batch_X = []
+#                         batch_Y = []
+#                 else:
+#                     data_struct['x'].append(np.asarray(X))
+#                     data_struct['y'].append(np.asarray(Y))
+#             if temporal:
+#                 data_struct.append(file_data)
+#     return data_struct
 
 
 def calc_metrics(conf_mat):
     """"""
     accuracy = ((conf_mat[0, 0] + conf_mat[1, 1])
                 / sum(sum(conf_mat)))
-    sensitivity = (conf_mat[0, 0]
+    precision = (conf_mat[0, 0]
+                         / (conf_mat[0, 0] + conf_mat[1, 0]))
+    recall = (conf_mat[0, 0]
                          / (conf_mat[0, 0] + conf_mat[0, 1]))
     specificity = (conf_mat[1, 1]
-                   / (conf_mat[1, 0] + conf_mat[1, 1]))
-    return accuracy, sensitivity, specificity
+              / (conf_mat[1, 1] + conf_mat[1, 0]))
+    return accuracy, precision, recall, specificity
     
 
-def add_configuration(model_name, configuration):
+def conf_to_string(model_name, configuration):
     """"""
     relevant_conf = [
         ('model_name', model_name),
-        ('cutting', configuration['cutting']),
+        ('stacking', configuration['stacking']),
         ('dropout', configuration['dropout']),
         ('batch_size', configuration['batch_size']),
         ('window_time', configuration['window_time']),
         ('learning_rate', configuration['learning_rate']),
         ('weight_init', configuration['weight_init']),
         ('optimizer', configuration['optimizer']),
+        ('objective', configuration['objective']),
         ('penalty', configuration['penalty']),
         ('regularization', configuration['regularization']),
         ('regularization_value',
@@ -130,12 +228,7 @@ def add_configuration(model_name, configuration):
         ('window_size', configuration['window_size']),
         ('temporal', configuration['temporal']),
         ('data_freq', configuration['data_freq']),
-        ('shift', configuration['shift']),
-        ('rotate', configuration['rotate']),
         ('pure_threshold', configuration['pure_threshold']),
-        ('pos_threshold', configuration['pos_threshold']),
-        ('percent_throw_no_fog',
-         configuration['percent_throw_no_fog']),
         ('n_epoch', configuration['n_epoch']),
         ('activation_last_layer',
          configuration['activation_last_layer']),
@@ -145,41 +238,52 @@ def add_configuration(model_name, configuration):
         ('conv_width', configuration['conv_width']),
         ('dense_width', configuration['dense_width']),
         ('conv_layers', configuration['conv_layers']),
-        ('dense_layers', configuration['dense_layers'])
+        ('dense_layers', configuration['dense_layers']),
+        ('n_feature', configuration['n_feature']),
+        ('augmentation', configuration['augmentation']),
+        ('lstm_dropout', configuration['lstm_dropout']),
+        ('roate_proba', configuration['roate_proba'])
     ]
     just_conf = [str(item[1]) for item in relevant_conf]
     new_conf = ' '.join(just_conf)+'\n'
-    with open('prediction/model_confs.dat', 'a') as confs:
-        confs.write(new_conf)
+    return new_conf
+
+
+def add_configuration(model_name, configuration):
+    """"""
+    with open('prediction/model_confs.csv', 'a') as confs:
+        confs.write(conf_to_string(model_name, configuration))
 
 
 def predict_model(model, data, batch_size, window_size, temporal,
-                  percent_throw_no_fog, cutting, pure_threshold,
-                  problem, model_name, reduce_memory):
+                  stacking, pure_threshold, data_freq,
+                  model_name, reduce_memory, n_feature):
     """"""
-    
     for data_name, data_files_generator in data.items():
         for patient_name, patient_file, patient_data in \
                 data_files_generator:
-            file_data_generator = get_prediction_generator(patient_data, window_size, batch_size,
-                             cutting, pure_threshold,
-                             percent_throw_no_fog, problem)
+            file_data_generator, aux_val, aux_settings = \
+                get_generator(
+                patient_data, window_size, batch_size, stacking,
+                pure_threshold, data_freq, n_feature,
+                    validation_data=None,
+                settings=None, temporal=temporal, predict=True,
+                get_raw_data=True, single_file=True)
 
-            # samples_it = 0
             X_total = None
             X_raw_total = None
-            Y_raw_total = None
             y_true_total = np.array([])
             y_pred_total = np.array([])
-            for X_batch, y_true_batch, X_raw_batch, Y_raw_batch in \
+            for [X_spe_batch, X_tem_batch, pre_X_tem_batch], \
+                y_true_batch in \
                     file_data_generator:
-                y_pred_batch = np.sign(model.predict_on_batch(X_batch))
+                y_pred_batch = np.sign(model.predict_on_batch([
+                    X_spe_batch, X_tem_batch, pre_X_tem_batch]))
                 for it in range(batch_size):
-                    X = X_batch[it]
+                    X_spe = X_spe_batch[it]
                     y_true = y_true_batch[it]
                     y_pred = y_pred_batch[it]
-                    X_raw = X_raw_batch[it]
-                    Y_raw = Y_raw_batch[it]
+                    X_tem = X_tem_batch[it]
                     y_true_total = np.concatenate(
                         (y_true_total,
                          np.full(window_size, y_true, dtype=int)), axis=0)
@@ -187,138 +291,92 @@ def predict_model(model, data, batch_size, window_size, temporal,
                     y_pred_total = np.concatenate((y_pred_total, np.full(
                         window_size, y_pred, dtype=int)), axis=0)
                     if X_total is None:
-                        X_total = X
-                        X_raw_total = X_raw
-                        Y_raw_total = Y_raw
+                        X_total = X_spe
+                        X_raw_total = X_tem
                     else:
-                        X_total = np.concatenate((X_total, X))
-                        X_raw_total = np.concatenate((X_raw_total, X_raw))
-                        Y_raw_total = np.concatenate(
-                            (Y_raw_total, Y_raw))
-        
-                # samples_it += batch_size
-                # End loop only condition
-                # if (samples_it + batch_size) > n_validation:
-                #     break
-
-            # #ACC
-            # # Plot transformation
-            # ax = X_total[:, 3]
-            # ay = X_total[:, 4]
-            # az = X_total[:, 5]
-        
-            time_data = np.linspace(0, (
-            X_total.shape[0] * (1 / 100)), X_total.shape[0])
-            
-            # print(time_data.shape)
-            # print(X_raw_total.shape)
-            # print(Y_raw_total.shape)
-            # print(X_total.shape)
-            # print(y_true_total.shape)
-            # print(y_pred_total.shape)
-            # y_concat = np.concatenate((y_true_total[:,np.newaxis],
-            #                            y_pred_total[:,np.newaxis]),
-            #                           axis=1)
-            if reduce_memory:
+                        X_total = np.concatenate((X_total, X_spe))
+                        X_raw_total = np.concatenate((X_raw_total, X_tem))
+            if temporal:
+                model.reset_states()
+            if X_total is not None:
+                # print(X_total.shape)
+                # print(X_raw_total.shape)
+                # print(y_true_total.shape)
+                # print(y_pred_total.shape)
                 complete_data = np.concatenate(
-                    (X_raw_total[:, 3:6],
-                     Y_raw_total[:, np.newaxis],
+                    (X_raw_total[:, 3:],
                      y_true_total[:, np.newaxis],
                      y_pred_total[:, np.newaxis]), axis=1)
-            else:
-                complete_data = np.concatenate((time_data[:,np.newaxis], X_raw_total,
-                                                Y_raw_total[:,np.newaxis],
-                                                X_total, y_true_total[:,np.newaxis],
-                                                y_pred_total[:,np.newaxis]), axis=1)
-
-            save_data(data=complete_data,
-                      file_path='prediction/'+data_name
-                                +'/'+ model_name+patient_file[
-                                  (patient_file.rfind('/')+1):])
-
-    # # SPLIT VIEW
-    # f1, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(5, sharex=True,
-    #                                              sharey=True)
-    # ax1.set_title('ACC-CHANNELS')
-    # ax1.set_xlabel('window-instances')
-    #
-    # ax1.plot(time_data, ax, color='r', label='accX')
-    # ax2.plot(time_data, ay, color='g', label='accY')
-    # ax3.plot(time_data, az, color='b', label='accZ')
-    # ax4.plot(time_data, y_true_total, color='c',
-    #          label='y_true')
-    # ax5.plot(time_data, y_pred_total, color='m',
-    #          label='y_pred')
-    #
-    # # SUMMARY VIEW
-    # f2 = plt.figure()
-    # ax1 = f2.add_subplot(111)
-    #
-    # ax1.set_title('ACC-SUMMARY')
-    # ax1.set_xlabel('window-instances')
-    #
-    # ax1.plot(time_data, ax, color='r', label='accX')
-    # ax1.plot(time_data, ay, color='g', label='accY')
-    # ax1.plot(time_data, az, color='b', label='accZ')
-    # ax1.plot(time_data, y_true_total, color='c',
-    #          label='y_true')
-    # ax1.plot(time_data, y_pred_total, color='m',
-    #          label='y_pred')
-    #
-    # ax1.legend()
-    #
-    # plt.show()
-
-
-def evaluate_epochs(model, n_epoch, generator, batch_size, n_data):
-    """"""
-    cum_sensitivity = 0.
-    cum_specificity = 0.
-    for epoch_i in range(n_epoch):
-        samples_it = 0
-        conf_mat = np.zeros((2, 2))
-        for X, y_true in generator:
-            y_pred = model.predict_on_batch(X)
-            y_pred = np.sign(y_pred)
-            positives = np.maximum(y_true, 0.)
-            pred_pos = np.maximum(y_pred, 0.)
-            negatives = np.maximum(-y_true, 0.)
-            pred_neg = np.maximum(-y_pred, 0.)
-            true_pos = pred_pos * positives
-            false_pos = pred_pos * negatives
-            true_neg = pred_neg * negatives
-            false_neg = pred_neg * positives
-            conf_mat[0, 0] += np.sum(true_pos)
-            conf_mat[0, 1] += np.sum(false_neg)
-            conf_mat[1, 0] += np.sum(false_pos)
-            conf_mat[1, 1] += np.sum(true_neg)
-        
-            samples_it += batch_size
-            # End loop only condition
-            if (samples_it + batch_size) > n_data:
-                break
-
-        accuracy, sensitivity, specificity = calc_metrics(conf_mat)
-
-        cum_specificity += specificity
-        cum_sensitivity += sensitivity
-
-    # AVERAGE METRICS
-    avg_sen = cum_sensitivity / n_epoch
-    avg_spe = cum_specificity / n_epoch
-    g_avg_sen_spe = sqrt(avg_sen*avg_spe)
+                
     
-    return model, g_avg_sen_spe
-    
+                save_data(data=complete_data,
+                          file_path='prediction/'+data_name
+                                    +'/'+ model_name+patient_file[
+                                      (patient_file.rfind('/')+1):],
+                          replace=True)
+
+
+# def evaluate_epochs(model, n_epoch, train_data, val_data,
+#                     batch_size, n_train, n_val, window_size,
+#                     stacking, pure_threshold, data_freq, temporal, n_feature):
+#     """"""
+#     cum_sensitivity = 0.
+#     cum_specificity = 0.
+#     train_generator, val_generator, aux = get_generator(
+#         train_data, window_size, batch_size,
+#         stacking, pure_threshold, data_freq, n_feature,
+#         validation_data=val_data, temporal=temporal)
+#     for epoch_i in range(n_epoch):
+#         samples_it = 0
+#         conf_mat = np.zeros((2, 2))
+#         model.fit_generator(train_generator, n_train, 1,
+#                             max_q_size=20,
+#                             nb_worker=1, pickle_safe=False)
+#         for X, y_true in val_generator:
+#             y_pred = model.predict_on_batch(X)
+#             y_pred = np.sign(y_pred)
+#             positives = np.maximum(y_true, 0.)
+#             pred_pos = np.maximum(y_pred, 0.)
+#             negatives = np.maximum(-y_true, 0.)
+#             pred_neg = np.maximum(-y_pred, 0.)
+#             true_pos = pred_pos * positives
+#             false_pos = pred_pos * negatives
+#             true_neg = pred_neg * negatives
+#             false_neg = pred_neg * positives
+#             conf_mat[0, 0] += np.sum(true_pos)
+#             conf_mat[0, 1] += np.sum(false_neg)
+#             conf_mat[1, 0] += np.sum(false_pos)
+#             conf_mat[1, 1] += np.sum(true_neg)
+#
+#             samples_it += batch_size
+#             # End loop only condition
+#             if (samples_it + batch_size) > n_val:
+#                 break
+#
+#         accuracy, sensitivity, specificity = calc_metrics(conf_mat)
+#
+#         cum_specificity += specificity
+#         cum_sensitivity += sensitivity
+#
+#     # AVERAGE METRICS
+#     avg_sen = cum_sensitivity / n_epoch
+#     avg_spe = cum_specificity / n_epoch
+#     g_avg_sen_spe = sqrt(avg_sen*avg_spe)
+#
+#     return model, g_avg_sen_spe
+
+
 def train_model(model, train_data, n_epoch, n_train,
-                batch_size, window_size, temporal, problem,
-                percent_throw_no_fog, shift, rotate, pos_threshold, cutting,
-                pure_threshold,
+                batch_size, window_size, stacking,
+                pure_threshold, data_freq, augmentation_factor,
+                n_batch_per_file, n_feature, roate_proba,
                 validation_data=None,
                 n_validation=0, settings=None, log_file_name=None,
-                model_name='', summarize=True, summary_epochs=5,
-                initial_epochs=20, epoch_step_size=10,
-                metric_threshold=0.005):
+                model_name='', summarize=False, summary_epochs=10,
+                initial_epochs=0, epoch_step_size=40,
+                metric_threshold=0.005, temporal=False,
+                precalculated=False, train_precalculated_data=None,
+                per_patient=True, save_train_error=True, conf_str=''):
     """Train model on the selected patients
 
     Parameters
@@ -341,715 +399,275 @@ def train_model(model, train_data, n_epoch, n_train,
         training process.
 
     """
-    
-    train_time = time.clock()
-    # train_accuracy = -1
-    # train_sensitivity = -1
-    # train_specificity = -1
-    # val_accuracy = -1
-    # val_sensitivity = -1
-    # val_specificity = -1
-    train_generator, validation_generator, settings = get_generator(
-        train_data, window_size, batch_size,
-        temporal, problem, shift, rotate, cutting, pure_threshold,
-        validation_data=validation_data,
-        settings=settings, percent_throw_no_fog=percent_throw_no_fog, pos_threshold=pos_threshold)
-    
-    train_eval_generator, val_eval_generator, aux = get_generator(
-        train_data, window_size, batch_size,
-        temporal, problem, shift, rotate, cutting, pure_threshold,
-        validation_data=validation_data,
-        settings=settings, percent_throw_no_fog=percent_throw_no_fog,
-        pos_threshold=pos_threshold)
-    
-    summary = OrderedDict([])
-    model.fit_generator(train_generator, n_train,
-                        initial_epochs,
-                        max_q_size=20,
-                        nb_worker=1, pickle_safe=False)
-    epoch_count = initial_epochs
-    n_epoch = n_epoch - initial_epochs
-    # cum_train_specificity = 0.
-    # cum_train_sensitivity = 0.
-    # cum_val_specificity = 0.
-    # cum_val_sensitivity = 0.
-    train_finished = False
-    model_weights_backup = model.get_weights()
-    if summarize and n_epoch > 0:
-        previous_metric = 0.
-        for epoch_i in range(0, n_epoch, (epoch_step_size+summary_epochs)):
-            if train_finished:
-                continue
-            
-            model.fit_generator(train_generator, n_train, epoch_step_size,
-                            # verbose=1,
-                                # callbacks=[
-                # save_batch_results_callback,
-                # save_epoch_results_callback,
-                # CSVLogger(log_file_name, separator=' ',
-                #           append=True)
-                # ],
-                #             validation_data=validation_generator,
-                #             nb_val_samples=n_validation,
-                            # class_weight=class_weight,
-                            max_q_size=20,
-                            nb_worker=1, pickle_safe=False)
-            model, new_metric = evaluate_epochs(
-                model, summary_epochs, val_eval_generator, batch_size, n_validation)
-            print('NEW METRIC VALUE: ')
-            print(new_metric)
-            if new_metric > (previous_metric + metric_threshold):
-                previous_metric = new_metric
-                model_weights_backup = model.get_weights()
-                epoch_count += (epoch_step_size + summary_epochs)
-                print('epoch_count: ')
-                print(epoch_count)
-            else:
-                model.set_weights(model_weights_backup)
-                train_finished = True
-                
-        cum_train_specificity = 0.
-        cum_train_sensitivity = 0.
-        cum_val_specificity = 0.
-        cum_val_sensitivity = 0.
-        for epoch_i in range(summary_epochs):
-            # global epoch_y_pred
-            # global epoch_y_true
-            # epoch_y_pred = None
-            # epoch_y_true = None
-    
-            # global epoch_true_pos
-            # global epoch_true_neg
-            # global epoch_positives
-            # global epoch_negatives
-            # epoch_true_pos = 0.
-            # epoch_true_neg = 0.
-            # epoch_positives = 0.
-            # epoch_negatives = 0.
-            # global epoch_conf_mat
-            # epoch_conf_mat = np.zeros((2, 2))
-            # print('Epoch ' + str(epoch_i) + '/' + str(n_epoch))
-            # model.fit_generator(train_generator, n_train, 1,
-            #                 verbose=1, callbacks=[
-            #     # save_batch_results_callback,
-            #     # save_epoch_results_callback,
-            #     CSVLogger(log_file_name, separator=' ',
-            #               append=True)
-            #     ],
-            #                 validation_data=validation_generator,
-            #                 nb_val_samples=n_validation,
-            #                 # class_weight=class_weight,
-            #                 max_q_size=30,
-            #                 nb_worker=1, pickle_safe=False)
-            # epoch_train_time = time.clock() - epoch_time_ini
-            # train_time += epoch_train_time
-    
-            # conf_mat = np.zeros((2, 2))
-            # positives = np.maximum(epoch_y_true, 0.)
-            # pred_pos = np.maximum(epoch_y_pred, 0.)
-            # negatives = np.maximum(-epoch_y_true, 0.)
-            # pred_neg = np.maximum(-epoch_y_pred, 0.)
-            # true_pos = pred_pos * positives
-            # false_pos = pred_pos - true_pos
-            # true_neg = pred_neg * negatives
-            # false_neg = pred_neg - true_neg
-            # conf_mat[0, 0] += np.sum(true_pos)
-            # conf_mat[0, 1] += np.sum(false_neg)
-            # conf_mat[1, 0] += np.sum(false_pos)
-            # conf_mat[1, 1] += np.sum(true_neg)
-            # train_accuracy, train_sensitivity, train_specificity = \
-            #     calc_metrics(conf_mat)
-            # summary[epoch_i]['train_accuracy'] = train_accuracy
-            # summary[epoch_i]['train_sensitivity'] = train_sensitivity
-            # summary[epoch_i]['train_specificity'] = train_specificity
-    
-    
-            # print('time: ' + str(time.clock() - epoch_time_ini)
-            #       + ' - train_acc: ' + str(train_accuracy)
-            #       + ' - train_sensitivity: ' + str(train_sensitivity)
-            #       + ' - train_specificity: ' + str(train_specificity))
-            #
-            # fast_acc = ((epoch_true_pos + epoch_true_neg) /
-            #             (epoch_positives + epoch_negatives))
-            # fast_sen = epoch_true_pos / epoch_positives
-            # fast_spe = epoch_true_neg / epoch_negatives
-            #
-            # print('FAST - time: ' + str(time.clock() - epoch_time_ini)
-            #       + ' - fast_acc: ' + str(fast_acc)
-            #       + ' - fast_sen: ' + str(fast_sen)
-            #       + ' - fast_spe: ' + str(fast_spe))
-            #
-            # # epoch_log = ('train_acc ' + str(train_accuracy)
-            # #              + ' train_sensitivity ' + str(
-            # #     train_sensitivity)
-            # #              + ' train_specificity ' + str(
-            # #     train_specificity)
-            # #              + '\n')
-            # epoch_log = ('train_acc ' + str(fast_acc)
-            #              + ' train_sensitivity ' + str(
-            #     fast_sen)
-            #              + ' train_specificity ' + str(
-            #     fast_spe)
-            #              + '\n')
-            #
-            # log_file.write(epoch_log)
-    
-            # TRAIN METRICS
-            # TRAIN
-            samples_it = 0
-            conf_mat = np.zeros((2, 2))
-    
-            for X, y_true in train_eval_generator:
-                model.train_on_batch(X, y_true, class_weight=None,
-                                     sample_weight=None)
-        
-                y_pred = model.predict_on_batch(X)
-                y_pred = np.sign(y_pred)
-                positives = np.maximum(y_true, 0.)
-                pred_pos = np.maximum(y_pred, 0.)
-                negatives = np.maximum(-y_true, 0.)
-                pred_neg = np.maximum(-y_pred, 0.)
-                true_pos = pred_pos * positives
-                false_pos = pred_pos * negatives
-                true_neg = pred_neg * negatives
-                false_neg = pred_neg * positives
-                conf_mat[0, 0] += np.sum(true_pos)
-                conf_mat[0, 1] += np.sum(false_neg)
-                conf_mat[1, 0] += np.sum(false_pos)
-                conf_mat[1, 1] += np.sum(true_neg)
-        
-                samples_it += batch_size
-                # End loop only condition
-                if (samples_it + batch_size) > n_train:
-                    break
-    
-            train_accuracy, train_sensitivity, train_specificity = \
-                calc_metrics(conf_mat)
-    
-            cum_train_specificity += train_specificity
-            cum_train_sensitivity += train_sensitivity
-    
-            # VAL METRICS
-            samples_it = 0
-    
-            conf_mat_val = np.zeros((2, 2))
-            for X, y_true in validation_generator:
-                y_pred = model.predict_on_batch(X)
-                y_pred = np.sign(y_pred)
-                positives = np.maximum(y_true, 0.)
-                pred_pos = np.maximum(y_pred, 0.)
-                negatives = np.maximum(-y_true, 0.)
-                pred_neg = np.maximum(-y_pred, 0.)
-                true_pos = pred_pos * positives
-                false_pos = pred_pos * negatives
-                true_neg = pred_neg * negatives
-                false_neg = pred_neg * positives
-                conf_mat_val[0, 0] += np.sum(true_pos)
-                conf_mat_val[0, 1] += np.sum(false_neg)
-                conf_mat_val[1, 0] += np.sum(false_pos)
-                conf_mat_val[1, 1] += np.sum(true_neg)
-        
-                samples_it += batch_size
-                # End loop only condition
-                if (samples_it + batch_size) > n_validation:
-                    break
-    
-            val_accuracy, val_sensitivity, val_specificity = \
-                calc_metrics(conf_mat_val)
-    
-            cum_val_specificity += val_specificity
-            cum_val_sensitivity += val_sensitivity
-    
-            # AVERAGE METRICS
-            avg_train_sen = cum_train_sensitivity / 10.
-            avg_train_spe = cum_train_specificity / 10.
-            avg_val_sen = cum_val_sensitivity / 10.
-            avg_val_spe = cum_val_specificity / 10.
-    
-            # if (avg_train_sen > 0.6 and avg_train_spe >
-            #     0.6 and avg_val_sen > 0.6 and
-            #             avg_val_spe > 0.6):
-            if True:
-                with open('summary6.txt', 'a') as log_file_s:
-                    log_file_s.write(
-                        model_name
-                        + ' avg_train_sen ' + str(avg_train_sen)
-                        + ' avg_train_spe ' + str(avg_train_spe)
-                        + ' avg_val_sen ' + str(avg_val_sen)
-                        + ' avg_val_spe ' + str(avg_val_spe)
-                        + '\n' + to_string(settings) + '\n')
-    # RECORD ALL RESUTLS
-    elif n_epoch > 0:
-        for epoch_i in range(n_epoch):
-            # epoch_time_ini = time.clock()
-            summary[epoch_i] = OrderedDict([])
-            # global epoch_y_pred
-            # global epoch_y_true
-            # epoch_y_pred = None
-            # epoch_y_true = None
-    
-            # global epoch_true_pos
-            # global epoch_true_neg
-            # global epoch_positives
-            # global epoch_negatives
-            # epoch_true_pos = 0.
-            # epoch_true_neg = 0.
-            # epoch_positives = 0.
-            # epoch_negatives = 0.
-            # global epoch_conf_mat
-            # epoch_conf_mat = np.zeros((2, 2))
-            # print('Epoch ' + str(epoch_i) + '/' + str(n_epoch))
-            # model.fit_generator(train_generator, n_train, 1,
-            #                 verbose=1, callbacks=[
-            #     # save_batch_results_callback,
-            #     # save_epoch_results_callback,
-            #     CSVLogger(log_file_name, separator=' ',
-            #               append=True)
-            #     ],
-            #                 validation_data=validation_generator,
-            #                 nb_val_samples=n_validation,
-            #                 # class_weight=class_weight,
-            #                 max_q_size=30,
-            #                 nb_worker=1, pickle_safe=False)
-            # epoch_train_time = time.clock() - epoch_time_ini
-            # train_time += epoch_train_time
-        
-        # conf_mat = np.zeros((2, 2))
-        # positives = np.maximum(epoch_y_true, 0.)
-        # pred_pos = np.maximum(epoch_y_pred, 0.)
-        # negatives = np.maximum(-epoch_y_true, 0.)
-        # pred_neg = np.maximum(-epoch_y_pred, 0.)
-        # true_pos = pred_pos * positives
-        # false_pos = pred_pos - true_pos
-        # true_neg = pred_neg * negatives
-        # false_neg = pred_neg - true_neg
-        # conf_mat[0, 0] += np.sum(true_pos)
-        # conf_mat[0, 1] += np.sum(false_neg)
-        # conf_mat[1, 0] += np.sum(false_pos)
-        # conf_mat[1, 1] += np.sum(true_neg)
-        # train_accuracy, train_sensitivity, train_specificity = \
-        #     calc_metrics(conf_mat)
-        # summary[epoch_i]['train_accuracy'] = train_accuracy
-        # summary[epoch_i]['train_sensitivity'] = train_sensitivity
-        # summary[epoch_i]['train_specificity'] = train_specificity
-        
-        
-        # print('time: ' + str(time.clock() - epoch_time_ini)
-        #       + ' - train_acc: ' + str(train_accuracy)
-        #       + ' - train_sensitivity: ' + str(train_sensitivity)
-        #       + ' - train_specificity: ' + str(train_specificity))
-        #
-        # fast_acc = ((epoch_true_pos + epoch_true_neg) /
-        #             (epoch_positives + epoch_negatives))
-        # fast_sen = epoch_true_pos / epoch_positives
-        # fast_spe = epoch_true_neg / epoch_negatives
-        #
-        # print('FAST - time: ' + str(time.clock() - epoch_time_ini)
-        #       + ' - fast_acc: ' + str(fast_acc)
-        #       + ' - fast_sen: ' + str(fast_sen)
-        #       + ' - fast_spe: ' + str(fast_spe))
-        #
-        # # epoch_log = ('train_acc ' + str(train_accuracy)
-        # #              + ' train_sensitivity ' + str(
-        # #     train_sensitivity)
-        # #              + ' train_specificity ' + str(
-        # #     train_specificity)
-        # #              + '\n')
-        # epoch_log = ('train_acc ' + str(fast_acc)
-        #              + ' train_sensitivity ' + str(
-        #     fast_sen)
-        #              + ' train_specificity ' + str(
-        #     fast_spe)
-        #              + '\n')
-        #
-        # log_file.write(epoch_log)
-    
-    # TRAIN METRICS
-            samples_it = 0
-            # train_loss = 0.
-            # batch_count = 0
-            conf_mat = np.zeros((2, 2))
-            for X, y_true in train_generator:
 
-                model.train_on_batch(X, y_true, class_weight=None,
-                                     sample_weight=None)
-                y_pred = model.predict_on_batch(X)
-                # train_loss += np.mean(np.maximum(1.-y_true*y_pred, 0.))
-                y_pred = np.sign(y_pred)
-                positives = np.maximum(y_true, 0.)
-                pred_pos = np.maximum(y_pred, 0.)
-                negatives = np.maximum(-y_true, 0.)
-                pred_neg = np.maximum(-y_pred, 0.)
-                true_pos = pred_pos * positives
-                false_pos = pred_pos * negatives
-                true_neg = pred_neg * negatives
-                false_neg = pred_neg * positives
-                conf_mat[0, 0] += np.sum(true_pos)
-                conf_mat[0, 1] += np.sum(false_neg)
-                conf_mat[1, 0] += np.sum(false_pos)
-                conf_mat[1, 1] += np.sum(true_neg)
-    
-                samples_it += batch_size
-                # batch_count += 1
-                # End loop only condition
-                if (samples_it + batch_size) > n_train:
-                    break
-            train_accuracy, train_sensitivity, train_specificity = \
-                calc_metrics(conf_mat)
-            # train_loss = train_loss/batch_count
-            # epoch_train_time = time.clock() - epoch_time_ini
-            # train_time += epoch_train_time
-
-            # VAL METRICS
-            samples_it = 0
-            # val_loss = 0.
-            # batch_count = 0
-            conf_mat_val = np.zeros((2, 2))
-            for X, y_true in validation_generator:
-                y_pred = model.predict_on_batch(X)
-                # val_loss += np.mean(np.maximum(1. - y_true * y_pred, 0.))
-                y_pred = np.sign(y_pred)
-                positives = np.maximum(y_true, 0.)
-                pred_pos = np.maximum(y_pred, 0.)
-                negatives = np.maximum(-y_true, 0.)
-                pred_neg = np.maximum(-y_pred, 0.)
-                true_pos = pred_pos * positives
-                false_pos = pred_pos * negatives
-                true_neg = pred_neg * negatives
-                false_neg = pred_neg * positives
-                conf_mat_val[0, 0] += np.sum(true_pos)
-                conf_mat_val[0, 1] += np.sum(false_neg)
-                conf_mat_val[1, 0] += np.sum(false_pos)
-                conf_mat_val[1, 1] += np.sum(true_neg)
-    
-                samples_it += batch_size
-                # batch_count += 1
-                # End loop only condition
-                if (samples_it + batch_size) > n_validation:
-                    break
-    
-            val_accuracy, val_sensitivity, val_specificity = \
-                calc_metrics(conf_mat_val)
-            
-            # val_loss = val_loss / batch_count
-        
-            # PRINT METRICS
-    
-            print('Model: '+model_name+' - Epoch: ' + str(epoch_i)
-                  # + ' - train_loss: ' + str(train_loss)
-                  + ' - train_acc: ' + str(train_accuracy)
-                  + ' - train_sensitivity: ' + str(train_sensitivity)
-                  + ' - train_specificity: ' + str(train_specificity)
-                  # + ' - val_loss: ' + str(val_loss)
-                  + ' - val_acc: ' + str(val_accuracy)
-                  + ' - val_sensitivity: ' + str(val_sensitivity)
-                  + ' - val_specificity: ' + str(val_specificity))
-    
-            train_aux = [[model_name, epoch_i, #train_loss,
-                          train_accuracy,
-                          train_sensitivity,
-                              train_specificity, 's', #val_loss,
-                         val_accuracy, val_sensitivity, val_specificity]]
-            
-            with open(log_file_name, 'a') as log_file:
-                log_file.write(to_string(train_aux)+'\n')
-
-    #
-    #
-    # # print(conf_mat)
-    # # print(sum(sum(conf_mat)))
-    # # print(count_i)
-    # train_accuracy = ((conf_mat[0, 0] + conf_mat[1, 1])
-    #             / sum(sum(conf_mat)))
-    # train_sensitivity = (conf_mat[0, 0]
-    #                / (conf_mat[0, 0] + conf_mat[0, 1]))
-    # train_specificity = (conf_mat[1, 1]
-    #                / (conf_mat[1, 0] + conf_mat[1, 1]))
-    # print('ACC: ' + str(train_accuracy))
-    # print('SEN: ' + str(train_sensitivity))
-    # print('SPE: ' + str(train_specificity))
-    # # train_summary[epoch_it] = OrderedDict(
-    # #     [('train_conf_mat', conf_mat), ('train_accuracy',
-    # #                              train_accuracy),
-    # #      ('train_sensitivity', train_sensitivity),
-    # #      ('train_specificity', train_specificity)])
-    # #
-    #
-    # # y_pred = model.predict_generator(val_eval_generator1, n_validation,
-    # #                                  max_q_size=20,
-    # #                                  nb_worker=1, pickle_safe=False)
-    # #
-    # # print(type(y_pred))
-    # # print(len(y_pred))
-    # # print(sum(y_pred))
-    # # print(sum(y_pred>0))
-    # # print(sum(y_pred < 0))
-    # # print(sum(y_pred == 0))
-    #
-    # if val_eval_generator is not None:
-    #     samples_it = 0
-    #     conf_mat = np.zeros((2, 2))
-    #     count_i = 0
-    #     for X, y_true in val_eval_generator:
-    #         # if temporal:
-    #         #     model.reset_states()
-    #
-    #         y_pred = model.predict_on_batch(X)
-    #         # print(len(y_pred))
-    #         # print(len(y_true))
-    #         # print((y_pred))
-    #         y_pred = np.sign(y_pred)
-    #         # print(len(y_pred))
-    #         # print((y_pred))
-    #
-    #         for i in range(len(y_true)):
-    #             count_i += 1
-    #             if label_is_positive(y_true[i]):
-    #                 if label_is_positive(y_pred[i]):
-    #                     conf_mat[0, 0] += 1
-    #                 else:
-    #                     conf_mat[0, 1] += 1
-    #             else:
-    #                 if label_is_positive(y_pred[i]):
-    #                     conf_mat[1, 0] += 1
-    #                 else:
-    #                     conf_mat[1, 1] += 1
-    #
-    #         samples_it += batch_size
-    #         # End loop only condition
-    #         if (samples_it + batch_size) > n_validation:
-    #             break
-    #
-    #     # print(conf_mat)
-    #     # print(sum(sum(conf_mat)))
-    #     # print(count_i)
-    #     val_accuracy = ((conf_mat[0, 0] + conf_mat[1, 1])
-    #                       / sum(sum(conf_mat)))
-    #     val_sensitivity = (conf_mat[0, 0]
-    #                          / (conf_mat[0, 0] + conf_mat[0, 1]))
-    #     val_specificity = (conf_mat[1, 1]
-    #                          / (conf_mat[1, 0] + conf_mat[1, 1]))
-    #     print('VAL_ACC: ' + str(val_accuracy))
-    #     print('VAL_SEN: ' + str(val_sensitivity))
-    #     print('VAL_SPE: ' + str(val_specificity))
-    #     #
-    #     # print(train_conf_mat)
-    #     # print(type(train_conf_mat))
-    #
-    # exit(1)
-
-    # else:
-    #
-    #     [status, trained_model, train_summary, settings] = single_train(
-    #         model, train_generator, n_epoch, n_train, batch_size,
-    #         temporal, class_weight,
-    #         validation_generator=validation_generator,
-    #         n_validation=n_validation, settings=settings)
-    #     if check_status(status):
-    #         msg = 'OK: Training process finished successfully'
-    #         is_error = False
-    #     else:
-    #         msg = 'ERROR: Training process FAILED: ' + str(status)
-    #         is_error = True
-    #     report_event(msg, is_error=is_error)
-    #
-    #     if settings is not None:
-    #         settings = define_settings(settings, final_status=status)
-    # train_summary = None
-    if settings is not None:
-        settings = define_settings(
-            settings,
-            # train_accuracy=train_accuracy,
-            # train_sensitivity=train_sensitivity,
-            # train_specificity=train_specificity,
-            training_time=train_time,
-            # validation_accuracy=val_accuracy,
-            # validation_sensitivity=val_sensitivity,
-            # validation_specificity=val_specificity
-        )
-        
     with open(log_file_name, 'a') as log_file:
-        log_file.write(to_string(settings))
-    # print(settings)
-    # exit(1)
-    return [model, summary, settings, epoch_count]
+        log_file.write(conf_str)
 
+    success = True
 
-def single_train(model, train_generator, n_epoch, n_train,
-                 batch_size, temporal, class_weight,
-                 validation_generator=None,
-                 n_validation=0, settings=None):
-    """Train the model
+    # summary = OrderedDict([])
+    best_model = None
+    patience_max = 1000
+    patience_count = 0
+    previous_metric = 0.
+    metric_threshold = 0.005
+    best_epoch_it = initial_epochs
+    epoch_ini = 0
+    epoch_step = 1
+    best_metric = 0.
+    abort_train = False
 
+    # if temporal:
+    #     sequence_length = n_batch_per_file
+    #
+    #     def reset_states(batch, logs):
+    #         if batch % sequence_length == 0:
+    #             model.reset_states()
+    #
+    #     callbacks = [
+    #         LambdaCallback(on_batch_end=reset_states)
+    #     ]
+    # else:
+    #     callbacks = []
+    # if initial_epochs > 0:
+    #     train_generator, aux_val, settings = get_generator(
+    #         train_data, window_size, batch_size,
+    #         stacking, pure_threshold, data_freq, n_feature,
+    #         augmentation_factor=augmentation_factor,
+    #         validation_data=None,
+    #         settings=settings, temporal=temporal, roate_proba=roate_proba)
+    #
+    #     model.fit_generator(train_generator,
+    #                         int(n_train*augmentation_factor/batch_size),
+    #                     initial_epochs,
+    #                     max_q_size=40,
+    #                     callbacks=callbacks,
+    #                     nb_worker=1, pickle_safe=False, verbose=0)
 
-    """
-    summary = None
-    time_ini = time.clock()
-    status = get_status_ini()
-    train_evolution = []
-    is_error = False
-    for epoch_it in range(n_epoch):
-        msg = ('\n==================\nSTARTING EPOCH: '
-               + str(epoch_it) + '\n========================')
-        report_event(msg, is_run_log=True)
-        samples_it = 0
-        for [X, y, y_orig], additional_info in train_generator:
-            current_patinet = additional_info['patient']
-            reset_state = additional_info['reset_state']
-            # if temporal and reset_state:
-            #     model.reset_states()
-            #     print('Reset')
-            #     print(current_patinet)
-            #     print(current_file)
-            # else:
-            #     print('continue')
-            #     print(current_patinet)
-            #     print(current_file)
-            try:
-                model.train_on_batch(X, y, class_weight=class_weight)
-            except Exception as e:
-                status = str(repr(e))
-                msg = ('ERROR:  Train failed for epoch '
-                       + str(epoch_it) + ' during patient: '
-                       + current_patinet + ' and status: ' + status)
-                is_error = True
-            else:
-                msg = ('OK: Train successful for epoch '
-                         + str(epoch_it))
-                is_error = False
-                samples_it += batch_size
-            # End loop only condition
-            if (not check_status(status) or
-                    (samples_it + batch_size) > n_train):
+    for epoch_i in range(epoch_ini, n_epoch, epoch_step):
+        ini_time = time.monotonic()
+        if abort_train:
+            continue
+
+        train_generator, aux_val, aux_settings = \
+            get_generator(
+                train_data, window_size, batch_size,
+                stacking, pure_threshold, data_freq,
+                n_feature,
+                validation_data=None,
+                settings=settings, temporal=temporal,
+                augmentation_factor=augmentation_factor,
+                roate_proba=roate_proba)
+
+        batch_it = 0
+        for [X_spe, X_tem, X_pre_tem], y_true in train_generator:
+            model.train_on_batch([X_spe, X_tem, X_pre_tem], y=y_true)
+            batch_it += 1
+            if batch_it % n_batch_per_file == 0:
+                model.reset_states()
+            if batch_it > int(n_train * augmentation_factor /
+                                      batch_size):
                 break
+        # history = model.fit_generator(
+        # train_generator, steps_per_epoch=int(n_train * augmentation_factor /
+        #                      batch_size), callbacks=None,
+        #     epochs=epoch_step, max_q_size=10, workers=1,
+        #     pickle_safe=False, verbose=0)
+        # summary[epoch_i] = OrderedDict([])
+
+        train_acc = []
+        train_sen = []
+        train_spe = []
+        train_pre = []
+        for patient_name, patient_data in train_data.items():
+            conf_mat = np.zeros((2, 2))
+            for patient_file in patient_data:
+                train_eval_generator, aux_val, aux_settings = \
+                    get_generator(
+                        patient_file, window_size, batch_size,
+                        stacking, pure_threshold,
+                        data_freq, n_feature,
+                        validation_data=None,
+                        settings=settings, temporal=temporal,
+                        predict=True, single_file=True)
+
+                for [X_spe, X_tem, X_pre_tem], y_true in train_eval_generator:
+                    y_pred = model.predict_on_batch([X_spe, X_tem, X_pre_tem])
+                    y_pred = np.sign(y_pred).T[0]
+                    positives = np.maximum(y_true, 0.)
+                    pred_pos = np.maximum(y_pred, 0.)
+                    negatives = np.maximum(-y_true, 0.)
+                    pred_neg = np.maximum(-y_pred, 0.)
+                    true_pos = pred_pos * positives
+                    false_pos = pred_pos * negatives
+                    true_neg = pred_neg * negatives
+                    false_neg = pred_neg * positives
+                    conf_mat[0, 0] += np.sum(true_pos)
+                    conf_mat[0, 1] += np.sum(false_neg)
+                    conf_mat[1, 0] += np.sum(false_pos)
+                    conf_mat[1, 1] += np.sum(true_neg)
+
+                if temporal:
+                    model.reset_states()
+
+            train_accuracy, train_precision, train_sensitivity, \
+            train_specificity = \
+                calc_metrics(conf_mat)
+
+            train_acc.append(train_accuracy)
+            train_sen.append(train_sensitivity)
+            train_spe.append(train_specificity)
+            train_pre.append(train_precision)
+
+        train_accuracy = np.nanmean(np.asarray(train_acc))
+        train_sensitivity = np.nanmean(np.asarray(train_sen))
+        train_specificity = np.nanmean(np.asarray(train_spe))
+        train_precision = np.nanmean(np.asarray(train_pre))
+
+        # train_metric = sqrt(train_sensitivity * train_specificity)
+        train_metric = 2 * (train_precision * train_sensitivity / (
+            train_precision + train_sensitivity))
+
+        # VAL METRICS
+        val_acc = []
+        val_sen = []
+        val_spe = []
+        val_pre = []
+        for patient_name, patient_data in validation_data.items():
+            conf_mat = np.zeros((2, 2))
+            for patient_file in patient_data:
+                val_eval_generator, aux_val, aux_settings = \
+                    get_generator(
+                        patient_file, window_size, batch_size,
+                        stacking, pure_threshold,
+                        data_freq, n_feature,
+                        validation_data=None,
+                        settings=settings, temporal=temporal,
+                        predict=True, single_file=True)
+
+                for [X_spe, X_tem, X_pre_tem], y_true in val_eval_generator:
+                    y_pred = model.predict_on_batch([X_spe, X_tem, X_pre_tem])
+                    y_pred = np.sign(y_pred).T[0]
+                    positives = np.maximum(y_true, 0.)
+                    pred_pos = np.maximum(y_pred, 0.)
+                    negatives = np.maximum(-y_true, 0.)
+                    pred_neg = np.maximum(-y_pred, 0.)
+                    true_pos = pred_pos * positives
+                    false_pos = pred_pos * negatives
+                    true_neg = pred_neg * negatives
+                    false_neg = pred_neg * positives
+                    conf_mat[0, 0] += np.sum(true_pos)
+                    conf_mat[0, 1] += np.sum(false_neg)
+                    conf_mat[1, 0] += np.sum(false_pos)
+                    conf_mat[1, 1] += np.sum(true_neg)
+
+                if temporal:
+                    model.reset_states()
+
+            val_accuracy, val_precision, val_sensitivity, \
+            val_specificity = \
+                calc_metrics(conf_mat)
+
+            val_acc.append(val_accuracy)
+            val_sen.append(val_sensitivity)
+            val_spe.append(val_specificity)
+            val_pre.append(val_pre)
+
+        val_accuracy = np.nanmean(np.asarray(val_acc))
+        val_sensitivity = np.nanmean(np.asarray(val_sen))
+        val_specificity = np.nanmean(np.asarray(val_spe))
+        val_precision = np.nanmean(np.asarray(val_spe))
+
+        # val_metric = sqrt(val_sensitivity*val_specificity)
+        val_metric = 2*(val_precision * val_sensitivity/(
+            val_precision + val_sensitivity))
+
+        new_metric = min(train_metric, val_metric)
+
+        patience_count += 1
+        if new_metric > best_metric:
+            # if best_metric < 0.8:
+            best_metric = new_metric
+            best_model = model.get_weights()
+            best_epoch_it = epoch_i + initial_epochs
+            if new_metric > (previous_metric +
+                                 metric_threshold):
+                previous_metric = new_metric
+                patience_count = 0
+            # elif min(train_specificity, val_specificity) > 0.9:
+            #     best_metric = new_metric
+            #     best_model = model.get_weights()
+            #     best_epoch_it = epoch_i + initial_epochs
+            #     if new_metric > (previous_metric +
+            #                          metric_threshold):
+            #         previous_metric = new_metric
+            #         patience_count = 0
+
+        # if epoch_i > 30 and train_metric < 0.1:
+        #     abort_train = True
+        #     success = False
+        # elif epoch_i > 50 and train_metric < 0.5:
+        #     abort_train = True
+        #     success = False
+        # elif epoch_i > 100 and best_metric < 0.6:
+        #     abort_train = True
+        #     success = False
+        # elif epoch_i > 200 and best_metric < 0.7:
+        #     abort_train = True
+        #     success = False
+        # elif epoch_i > 300 and best_metric < 0.8:
+        #     abort_train = True
+        #     success = False
+        # el
+        if patience_count > patience_max:
+            abort_train = True
+            print('STOPPED BY CONVERGENCE')
+
+        # PRINT METRICS
+        if temporal==2:
+            prefix = 'GRU2 - '
+        elif temporal == 1:
+            prefix = 'LSTM2 - '
+        elif temporal == 0:
+            prefix = 'MLP2 - '
+        elif temporal == 3:
+            prefix = 'GRU1-MLP1 - '
+        elif temporal == 4:
+            prefix = 'YEAH - '
+        print('\n' + prefix + model_name + ' - Ep: ' + str(epoch_i+initial_epochs)
+              + ' - patience_count: ' + str(patience_count) + '/' + str(patience_max)
+              + ' -  time: ' + str(time.monotonic() - ini_time)
+              # + ' -  loss: ' + str(history.history['loss'][0])
+              + '\ntrain_precision: ' + str(round(train_precision, 4)*100)
+              + ' - train_recall: ' + str(round(train_sensitivity, 4)*100)
+              + ' - train_f1: ' + str(round(train_metric, 4) * 100)
+              + ' - val_precision: ' + str(round(val_precision,4)*100)
+              + ' - val_recall: ' + str(round(val_sensitivity,4)*100)
+              + ' - val_f1: ' + str(round(val_metric, 4)*100)
+              + ' - best_f1: ' + str(round(best_metric, 4) * 100)
+              + ' - train_acc: ' + str(round(train_accuracy, 4) * 100)
+              + ' - val_acc: ' + str(
+            round(val_accuracy, 4) * 100)
+              + ' - train_spe: ' + str(round(train_specificity, 4) * 100)
+              + ' - val_spe: ' + str(
+            round(val_specificity, 4) * 100)
+              )
+        train_aux = [[epoch_i,
+                      train_accuracy,
+                      train_precision,
+                      train_sensitivity,
+                      train_specificity,
+                      val_accuracy, val_precision, val_sensitivity,
+                      val_specificity, train_metric, val_metric, new_metric
+                      ]]
+
+        with open(log_file_name, 'a') as log_file:
+            log_file.write(to_string(train_aux)+'\n')
             
-        report_event(msg, is_error=is_error)
-        report_event('==================\nENDED EPOCH: ' + str(
-            epoch_it) + '\n========================',
-                     is_run_log=True)
-                
-        if check_status(status):
-            [status, prediction, summary] = predict_single_result(
-                model, train_generator, batch_size, n_train, temporal,
-                validation_generator=validation_generator,
-                n_validation=n_validation)
-            if check_status(status):
-                train_evolution.append(['Epoch ' + str(epoch_it),
-                                        prediction])
-                msg = ('Prediction results:\n' + to_string(summary))
-                is_run_log = True
-                is_error = False
-            else:
-                msg = ('ERROR: Prediction failed at epoch '
-                       + str(epoch_it) + ': ' + status)
-                is_run_log = False
-                is_error = True
-            report_event(msg, is_run_log=is_run_log,
-                         is_error=is_error)
-            
-    if check_status(status):
-        msg = ('OK: Train finished successfully at epoch '
-               + str(epoch_it))
-        is_error = False
-    else:
-        msg = ('ERROR: Aborting train at epoch ' + str(epoch_it)
-               + ', something has failed: ' + status)
-        is_error = True
-    report_event(msg, is_error=is_error)
-    
-    if settings is not None:
-        settings = define_settings(settings, training_time=(
-            time.clock() - time_ini), new_settings_dict=summary)
-    
-    return [status, model, train_evolution, settings]
+    if best_model is not None:
+        model.set_weights(best_model)
 
-
-def predict_label(model, generator, batch_size, n_train, temporal):
-    """"""
-    status = get_status_ini()
-    label_data = []
-    samples_it = 0
-    for [X, y_true, y_orig], additional_info in generator:
-        if temporal and additional_info['reset_state']:
-            model.reset_states()
-        try:
-            y_pred = model.predict_on_batch(X)
-        except Exception as e:
-            status = str(repr(e))
-        else:
-            label_data.append((y_true, y_orig, y_pred))
-            samples_it += batch_size
-            # End loop only condition
-            if (not check_status(status)
-                    or (samples_it + batch_size) > n_train):
-                break
-    return status, label_data
-
-
-def predict_single_result(model, train_generator, batch_size, n_train,
-                          temporal, validation_generator=None,
-                          n_validation=None):
-    """"""
-    train_metrics = None
-    val_metrics = None
-    prediction = OrderedDict([])
-    status, label_data = predict_label(model, train_generator,
-                                       batch_size, n_train, temporal)
-    
-    if check_status(status):
-        [train_conf_mat, train_statistic] = get_statistics(label_data)
-        msg = 'OK: Prediction successful for Train data'
-        report_event(msg)
-        # train_metrics = metrics_calc(train_conf_mat)
-        prediction['train'] = OrderedDict([
-            (get_prediction_global_key(), train_metrics),
-            (get_prediction_partial_key(), train_statistic)])
-
-        if validation_generator is None or n_validation is None:
-            report_event('WARNING: No validation generator or '
-                         'counter')
-        else:
-            status, label_data = predict_label(
-                model, validation_generator, batch_size, n_validation,
-                temporal)
-            
-            if check_status(status):
-                [val_conf_mat, val_statistic] = get_statistics(
-                    label_data)
-                msg = 'OK: Prediction successful for Validation data'
-                report_event(msg)
-                # val_metrics = metrics_calc(val_conf_mat)
-                prediction['validation'] = OrderedDict([
-                    (get_prediction_global_key(), val_metrics),
-                    (get_prediction_partial_key(), val_statistic)])
-            else:
-                msg = ('ERROR: Aborted prediction for Validation '
-                       + 'data: ' + status)
-                report_event(msg, is_error=True)
-    else:
-        msg = 'ERROR: Aborted prediction for Train data: ' + status
-        report_event(msg, is_error=True)
-    
-    return [status, prediction, get_prediction_summary(
-        train_metrics, val_metrics)]
-
-
-def predict_result(model, train_patient, window_size, batch_size,
-                   temporal, problem, n_train, threshold,
-                   augment_shift, augment_rotate,
-                   validation_patient=None, n_validation=None):
-    """"""
-    
-    train_generator, validation_generator = get_generator(
-        train_patient, window_size, batch_size, temporal,
-        problem, validation_patient=validation_patient,
-        shift_augmentation=augment_shift,
-        rotate_augmentation=augment_rotate, threshold=threshold)
-    
-    return predict_single_result(
-        model, train_generator, batch_size, n_train, temporal,
-        validation_generator=validation_generator,
-        n_validation=n_validation)
+    return [model, best_epoch_it, success]
 
 
 # EOF

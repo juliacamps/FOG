@@ -6,6 +6,7 @@
 import numpy as np
 import datetime
 from collections import OrderedDict
+from scipy.signal import butter
 
 from FOG.definitions import get_delimiter
 from FOG.definitions import get_delimiter_level
@@ -13,7 +14,7 @@ from FOG.definitions import get_delimiter_level
 
 def fft_window(window):
     """"""
-    return np.abs(np.fft.fft(window, axis=0) / window.shape[0])
+    return np.abs(np.fft.fft(window, axis=0) / window.shape[0])[:int(window.shape[0]/2)]
 
 
 def is_numeric(string):
