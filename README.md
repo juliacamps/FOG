@@ -7,4 +7,3 @@ This project is to present a new approach for freezing fo gait (FoG) events in P
 
 Publishe in Knowledge-Based Systems: https://doi.org/10.1016/j.knosys.2017.10.017
 
-These software and tools are licenced under a Creative Commons Attribution licence (CC BY).
